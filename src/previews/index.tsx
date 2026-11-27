@@ -194,8 +194,54 @@ function WeatherPreview({ open, lang }: PreviewProps) {
   )
 }
 
+/* ---------------- RSVP ---------------- */
+function RsvpPreview({ open, fixed, lang }: PreviewProps) {
+  const ko = lang === 'ko'
+  const novalid = has(open, 'novalid')
+  const overbook = has(open, 'overbook')
+  const labels = has(open, 'labels')
+  const moved = has(fixed, 'venue')
+  const cap = moved ? 60 : 40
+  const left = overbook ? -3 : moved ? 21 : 1
+  const fields = [
+    { id: 'name', label: ko ? '이름' : 'Name', ph: ko ? '이름' : 'name' },
+    { id: 'email', label: ko ? '이메일' : 'Email', ph: ko ? '이메일' : 'email' },
+    { id: 'diet', label: ko ? '식단 요청 (선택)' : 'Dietary needs (optional)', ph: ko ? '식단?' : 'diet?' },
+  ]
+  const full = !overbook && left <= 0
+  return (
+    <div style={{ fontFamily: 'system-ui, -apple-system, Segoe UI, sans-serif', background: labels ? '#fff' : '#f5f3ff', minHeight: '100%', color: '#1e1b4b' }}>
+      <div style={{ padding: '18px 20px', background: labels ? '#ddd' : 'linear-gradient(120deg,#4f46e5,#7c3aed)', color: labels ? '#555' : '#fff' }}>
+        <div style={{ fontSize: 11, letterSpacing: 2, opacity: 0.8 }}>{ko ? '프론트엔드 밋업' : 'FRONTEND MEETUP'}</div>
+        <div style={{ fontSize: 22, fontWeight: 700 }}>
+          {moved ? (ko ? '토요일 오후 2시 · 큰 홀' : 'Saturday 2pm · Main Hall') : ko ? '금요일 오후 7시 · 3층 회의실' : 'Friday 7pm · Room 3F'}
+        </div>
+        <div style={{ marginTop: 6, fontWeight: 600, color: overbook ? '#ff4d4d' : undefined }}>
+          {ko ? `남은 자리 ${left} / ${cap}` : `${left} of ${cap} seats left`}
+        </div>
+      </div>
+      <div style={{ padding: 20, maxWidth: 360 }}>
+        {novalid && <div style={{ background: '#dcfce7', padding: 8, marginBottom: 10, fontSize: 13 }}>✅ {ko ? '감사합니다, undefined!' : 'Thanks, undefined!'}</div>}
+        {fields.map((f) => (
+          <div key={f.id} style={{ marginBottom: 10 }}>
+            {!labels && <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 3 }}>{f.label}</label>}
+            <div style={{ border: `1px solid ${labels ? '#ccc' : '#c7d2fe'}`, borderRadius: labels ? 0 : 8, padding: '7px 9px', fontSize: 13, color: '#9ca3af', background: '#fff' }}>
+              {labels ? f.ph : ''}
+            </div>
+          </div>
+        ))}
+        <button style={{ border: 0, borderRadius: labels ? 0 : 999, padding: '9px 18px', fontWeight: 700, background: labels ? '#e5e5e5' : '#4f46e5', color: labels ? '#333' : '#fff' }}>
+          {full ? (ko ? '대기자 명단 등록' : 'Join the waitlist') : ko ? '참가 신청' : 'RSVP'}
+        </button>
+      </div>
+      <ConsoleStrip lines={overbook ? [ko ? 'seatsLeft가 0 미만인데 신청을 받았음' : 'Accepted RSVP while seatsLeft < 0'] : []} />
+    </div>
+  )
+}
+
 export const PREVIEWS: Record<string, (p: PreviewProps) => ReactNode> = {
   todo: TodoPreview,
   cafe: CafePreview,
   weather: WeatherPreview,
+  rsvp: RsvpPreview,
 }

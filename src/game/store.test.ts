@@ -166,3 +166,20 @@ describe('progress and sessions', () => {
     expect(state().sessions[0]).toBeUndefined()
   })
 })
+
+describe('stage 3: Crunch Time', () => {
+  it('removes the committed attendee list when the leak is fixed', () => {
+    state().openStage(3, true)
+    state().beginPlay()
+    const i = state().agents.findIndex((a) => a.projectId === 'rsvp')
+    G.setState({ agents: state().agents.map((a, k) => (k === i ? { ...a, built: true, status: 'done', open: ['leak'], files: [{ path: 'data/attendees.csv', mark: 'warn' }] } : a)) })
+    state().selectAgent(i)
+    const fix = { id: 'f', label: { en: 'fix', ko: 'fix' }, tier: 'great' as const, issueId: 'leak', seconds: 1 }
+    G.setState({ agents: state().agents.map((a, k) => (k === i ? { ...a, choices: [fix], inspected: { ...a.inspected, explorer: true } } : a)) })
+    state().send(0)
+    for (let t = 0; t < 2; t += 0.1) state().tick(0.1)
+    const rsvp = state().agents[i]
+    expect(rsvp.fixed).toContain('leak')
+    expect(rsvp.files.map((f) => f.path)).not.toContain('data/attendees.csv')
+  })
+})

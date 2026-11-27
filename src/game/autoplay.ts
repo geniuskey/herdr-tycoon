@@ -13,7 +13,7 @@ export interface Policy {
   mail: number
   /** Prompt tier the player prefers once the project is built. */
   tier: 'great' | 'ok' | 'trap' | 'vague'
-  /** Seconds to keep sending polish prompts after every task is done. */
+  /** Seconds to keep sending polish prompts once every task is done (the clock has stopped). */
   polishFor: number
   /** Force End shift at this stage time. */
   endAt?: number
@@ -48,7 +48,7 @@ export function play(stage: number, p: Policy, maxSeconds = 600): PlayResult {
         const a = s.agents[i]
         if (a.status === 'blocked') return 0
         if (a.status !== 'idle' && a.status !== 'done') return 9
-        if (a.built && a.open.length === 0) return p.polishFor > 0 && (s.finishedAt === undefined || polishing) ? 2 : 9
+        if (a.built && a.open.length === 0) return polishing ? 2 : 9
         return 1
       }
       const best = s.agents.reduce((b, _, i) => (want(i) < want(b) ? i : b), 0)

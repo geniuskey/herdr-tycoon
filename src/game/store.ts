@@ -193,7 +193,7 @@ function buildChoices(projectId: string): Choice[] {
 // A generic prompt skips the inspection, so it must cost more than inspecting + a sharp prompt,
 // even when the player's attention is split across three agents.
 const OK_SECONDS = 13
-const OK_SUCCESS = 0.5
+const OK_SUCCESS = 0.4
 
 function genChoices(agent: Agent): Choice[] {
   const open = agent.open
@@ -231,6 +231,7 @@ const REMOVALS: Record<string, (p: string) => boolean> = {
   images: (p) => p.includes('/Imgs/'),
   secret: (p) => p === '.env',
   deadcode: (p) => p.includes('final_final'),
+  leak: (p) => p === 'data/attendees.csv',
 }
 
 

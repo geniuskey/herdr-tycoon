@@ -407,6 +407,129 @@ export const PROJECTS: Record<string, ProjectScenario> = {
       },
     ],
   },
+  rsvp: {
+    id: 'rsvp',
+    name: 'rsvp-form',
+    branch: 'feature/rsvp',
+    title: l('Meetup RSVP', '밋업 참가 신청'),
+    port: 3004,
+    brief: {
+      from: l('Sora (Community)', '소라 (커뮤니티팀)'),
+      subject: l('RSVP page for Friday’s meetup', '금요일 밋업 참가 신청 페이지'),
+      body: l(
+        'Hi! We need an RSVP page for Friday’s meetup: name, email and dietary needs. The room holds 40 people, so show how many seats are left. One of our regulars uses a screen reader, so every field must be properly labeled and announced.',
+        '안녕하세요! 금요일 밋업 참가 신청 페이지가 필요해요: 이름, 이메일, 식단 요청. 방에 40명까지 들어가니 남은 자리를 보여 주세요. 단골 한 분이 스크린 리더를 쓰셔서, 모든 입력란에 제대로 된 라벨이 있고 읽혀야 해요.',
+      ),
+    },
+    buildChoices: [
+      {
+        label: l(
+          'Build an RSVP form with React: name, email, dietary needs, and a live "seats left" counter out of 40. No backend; keep RSVPs in local state.',
+          'React로 참가 신청 폼을 만들어 줘: 이름, 이메일, 식단 요청, 그리고 40석 중 "남은 자리" 실시간 표시. 백엔드 없이 신청 내역은 로컬 state로.',
+        ),
+        tier: 'great',
+        seconds: 7,
+        reply: l('The form is live at localhost:3004. People can sign up! Try submitting it.', 'localhost:3004에 폼을 띄웠어요. 신청은 돼요! 한번 제출해 보세요.'),
+      },
+      {
+        label: l('Make a signup page.', '신청 페이지 만들어 줘.'),
+        tier: 'ok',
+        seconds: 11,
+        reply: l('Made a signup page at localhost:3004. It has a form.', 'localhost:3004에 신청 페이지를 만들었어요. 폼이 있어요.'),
+      },
+      {
+        label: l('Build a full ticketing platform with payments, QR codes and a mobile app.', '결제, QR 코드, 모바일 앱까지 있는 티켓팅 플랫폼을 통째로 만들어 줘.'),
+        tier: 'trap',
+        seconds: 16,
+        reply: l('The payment provider needs a business license. The form part works on localhost:3004.', '결제 대행사가 사업자 등록증을 요구해요. 폼 부분은 localhost:3004에서 돌아가요.'),
+      },
+    ],
+    baseFiles: [
+      { path: 'package.json' },
+      { path: 'src/App.jsx' },
+      { path: 'src/RsvpForm.jsx' },
+      { path: 'data/attendees.csv', mark: 'warn' },
+    ],
+    issues: [
+      {
+        id: 'novalid',
+        title: l('Empty form accepted', '빈 폼도 제출됨'),
+        visibleIn: 'browser',
+        great: l(
+          'Submitting the empty form shows "Thanks, undefined!". Require name and a valid email, and show inline errors next to each field.',
+          '빈 폼을 제출하면 "감사합니다, undefined!"가 떠. 이름과 올바른 이메일을 필수로 하고, 입력란마다 옆에 에러를 보여 줘.',
+        ),
+        ok: l('Add some validation.', '검증 좀 넣어 줘.'),
+        fixedReply: l('Name and email are required now, with inline errors. No more "Thanks, undefined!".', '이제 이름과 이메일이 필수이고, 입력란 옆에 에러가 떠요. "감사합니다, undefined!"는 이제 없어요.'),
+        files: [
+          { path: 'src/validate.js', mark: 'new' },
+          { path: 'src/RsvpForm.jsx', mark: 'modified' },
+        ],
+      },
+      {
+        id: 'overbook',
+        title: l('Seats left goes negative', '남은 자리가 음수'),
+        visibleIn: 'browser',
+        great: l(
+          'The counter says "-3 seats left" and still accepts RSVPs. Stop at 40 and switch the button to "Join the waitlist" when full.',
+          '카운터가 "남은 자리 -3"인데도 계속 신청을 받아. 40명에서 막고, 꽉 차면 버튼을 "대기자 명단 등록"으로 바꿔 줘.',
+        ),
+        ok: l('The seat count is wrong.', '자리 수가 이상해.'),
+        fixedReply: l('Capped RSVPs at 40. Once full, new people join a waitlist instead.', '신청을 40명으로 제한했어요. 꽉 차면 새 신청은 대기자 명단으로 가요.'),
+        files: [{ path: 'src/RsvpForm.jsx', mark: 'modified' }],
+      },
+      {
+        id: 'labels',
+        title: l('Fields not labeled for screen readers', '스크린 리더용 라벨 없음'),
+        visibleIn: 'mail',
+        great: l(
+          'Inputs only have placeholder text. Add a <label> for every field, link errors with aria-describedby, and announce success in an aria-live region.',
+          '입력란에 placeholder만 있어. 모든 입력란에 <label>을 달고, 에러는 aria-describedby로 연결하고, 성공 메시지는 aria-live 영역으로 읽어 줘.',
+        ),
+        ok: l('Make it accessible.', '접근성 좀 챙겨 줘.'),
+        fixedReply: l('Every field has a real label now, errors are linked, and the confirmation is announced.', '이제 모든 입력란에 진짜 라벨이 있고, 에러가 연결되고, 확인 메시지가 읽혀요.'),
+        files: [{ path: 'src/RsvpForm.jsx', mark: 'modified' }],
+      },
+      {
+        id: 'leak',
+        title: l('Attendee emails committed to git', '참가자 이메일이 git에 커밋됨'),
+        visibleIn: 'explorer',
+        great: l(
+          'data/attendees.csv has real attendee emails and is committed. Delete it, add data/ to .gitignore, and use made-up sample data instead.',
+          'data/attendees.csv에 실제 참가자 이메일이 들어 있고 커밋까지 됐어. 지우고, data/를 .gitignore에 넣고, 가짜 샘플 데이터를 대신 써.',
+        ),
+        ok: l('Clean up the data folder.', 'data 폴더 정리 좀 해 줘.'),
+        fixedReply: l('Removed attendees.csv, ignored data/, and added fake sample data for development.', 'attendees.csv를 지우고, data/를 무시하게 하고, 개발용 가짜 샘플 데이터를 넣었어요.'),
+        files: [
+          { path: '.gitignore', mark: 'new' },
+          { path: 'src/sample-data.js', mark: 'new' },
+        ],
+      },
+    ],
+    lateMails: [
+      {
+        at: 60,
+        from: l('Sora (Community)', '소라 (커뮤니티팀)'),
+        subject: l('Change of plans: new venue!', '계획 변경: 장소가 바뀌었어요!'),
+        body: l(
+          'Sorry for the late change! We moved to a bigger hall: it’s now on Saturday at 2pm and holds 60 people. Can the page show the new date and capacity?',
+          '갑자기 바꿔서 죄송해요! 더 큰 홀로 옮겼어요: 토요일 오후 2시로 바뀌었고 60명까지 들어가요. 페이지에 새 날짜와 정원을 반영해 주실 수 있나요?',
+        ),
+        issue: {
+          id: 'venue',
+          title: l('New date and capacity', '새 날짜와 정원'),
+          visibleIn: 'mail',
+          great: l(
+            'The meetup moved: Saturday 2pm, capacity 60. Update the date in the header and make capacity a single config value used by the counter.',
+            '밋업이 바뀌었어: 토요일 오후 2시, 정원 60명. 헤더의 날짜를 고치고, 정원은 카운터가 쓰는 설정값 하나로 빼 줘.',
+          ),
+          ok: l('The event details changed, update them.', '행사 정보가 바뀌었어, 반영해 줘.'),
+          fixedReply: l('Updated to Saturday 2pm and moved capacity (now 60) into one config value.', '토요일 오후 2시로 고치고, 정원(이제 60명)을 설정값 하나로 뺐어요.'),
+          files: [{ path: 'src/event.config.js', mark: 'new' }],
+        },
+      },
+    ],
+  },
 }
 
 export const STAGES: StageDef[] = [
@@ -449,6 +572,19 @@ export const STAGES: StageDef[] = [
       l('"Don\'t ask again" saves time... but read what you approve.', '"다시 묻지 않기"는 시간을 아껴 줘요... 하지만 뭘 승인하는지는 읽으세요.'),
       l('Never approve destructive commands blindly.', '파괴적인 명령은 절대 무작정 승인하지 마세요.'),
       l('Keep every dot yellow.', '모든 점을 노란색으로 유지하세요.'),
+    ],
+  },
+  {
+    id: 3,
+    name: l('Crunch Time', '마감 직전'),
+    subtitle: l('4 agents · plans change mid-shift', '에이전트 4개 · 근무 중 계획 변경'),
+    projects: ['cafe', 'rsvp', 'weather', 'todo'],
+    blockChance: 0.45,
+    par: 195,
+    lessons: [
+      l('Four agents: press N to jump to whoever needs you.', '에이전트 4개: N을 눌러 손이 필요한 에이전트로 바로 가세요.'),
+      l('Clients change their minds. Watch the inbox for new mail.', '고객은 마음을 바꿔요. 새 메일이 오는지 받은 편지함을 지켜보세요.'),
+      l('A secret or personal data in the repo is a bug too: check the Explorer.', '저장소에 든 비밀번호나 개인정보도 버그예요: 탐색기를 확인하세요.'),
     ],
   },
 ]
