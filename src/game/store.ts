@@ -427,7 +427,7 @@ export const useGame = create<GameState>((set, get) => ({
     const mails: Mail[] = stage.projects.map((pid, idx) => {
       const p = PROJECTS[pid]
       const mailIssue = p.issues.find((x) => x.visibleIn === 'mail')
-      return { id: briefMailId(pid), ...p.brief, read: false, at: -idx, projectId: pid, issueId: mailIssue?.id }
+      return { id: briefMailId(pid), ...(stage.briefs?.[pid] ?? p.brief), read: false, at: -idx, projectId: pid, issueId: mailIssue?.id }
     })
     set({
       screen: 'intro',

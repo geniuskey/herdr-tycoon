@@ -183,3 +183,26 @@ describe('stage 3: Crunch Time', () => {
     expect(rsvp.files.map((f) => f.path)).not.toContain('data/attendees.csv')
   })
 })
+
+describe('inbox per stage', () => {
+  it('gives returning projects a new brief written for that stage', () => {
+    const subjects = [0, 1, 2, 3].map((st) => {
+      state().openStage(st, true)
+      return state().mails.find((m) => m.id === briefMailId('todo'))!.subject.en
+    })
+    expect(new Set(subjects).size).toBe(subjects.length)
+  })
+
+  it('only holds mail for the projects in the stage', () => {
+    state().openStage(2, true)
+    expect(state().mails.map((m) => m.projectId).sort()).toEqual(['cafe', 'todo', 'weather'])
+  })
+
+  it('keeps the TV hint in a returning weather brief, which its mail-only issue relies on', () => {
+    state().openStage(3, true)
+    const weather = state().mails.find((m) => m.id === briefMailId('weather'))!
+    expect(weather.issueId).toBe('tvsize')
+    expect(weather.body.en).toMatch(/TV/)
+    expect(weather.subject.en).not.toBe(PROJECTS.weather.brief.subject.en)
+  })
+})

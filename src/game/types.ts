@@ -27,13 +27,19 @@ export interface Issue {
   files?: FileNode[]
 }
 
+export interface Brief {
+  from: L
+  subject: L
+  body: L
+}
+
 export interface ProjectScenario {
   id: string
   name: string // folder name, e.g. "todo-app"
   branch: string
   title: L // human name
   port: number
-  brief: { from: L; subject: L; body: L }
+  brief: Brief
   buildChoices: { label: L; tier: Tier; seconds: number; reply: L }[]
   /** Files that exist after the first build. */
   baseFiles: FileNode[]
@@ -116,6 +122,11 @@ export interface StageDef {
   subtitle: L
   projects: string[]
   blockChance: number
+  /**
+   * Briefs for projects that return from an earlier stage, so the inbox only holds this stage's mail.
+   * Each must still carry what the project's sharp build prompt and mail-only issues rely on.
+   */
+  briefs?: Record<string, Brief>
   /** Seconds to finish every task for 3★ (2★ allows DEADLINE_FACTOR × par). */
   par: number
   tutorial?: boolean

@@ -554,6 +554,16 @@ export const STAGES: StageDef[] = [
     subtitle: l('2 agents in parallel', '에이전트 2개 동시 운영'),
     projects: ['todo', 'cafe'],
     blockChance: 0.35,
+    briefs: {
+      todo: {
+        from: l('Mina (PM)', '미나 (PM)'),
+        subject: l('Todo app, round two', '할 일 앱, 2라운드'),
+        body: l(
+          'The todo app was a hit, but the repo got wiped in a laptop mishap 😅 Could you rebuild it? Same as before: add tasks, check them off, delete them, no backend, and it must work on phones. I’m also handing you a second client today, so keep both agents busy!',
+          '할 일 앱 반응이 좋았는데, 노트북 사고로 저장소가 날아갔어요 😅 다시 만들어 주실 수 있나요? 전과 같아요: 할 일 추가, 완료 체크, 삭제, 백엔드 없이, 휴대폰에서도 잘 돼야 해요. 오늘은 두 번째 고객도 맡기니까 에이전트 둘 다 놀지 않게 해 주세요!',
+        ),
+      },
+    },
     par: 120,
     lessons: [
       l('While one agent works, feed the other one.', '한 에이전트가 일하는 동안 다른 에이전트에게 일을 주세요.'),
@@ -567,6 +577,24 @@ export const STAGES: StageDef[] = [
     subtitle: l('3 agents · lots of approvals', '에이전트 3개 · 승인 폭탄'),
     projects: ['todo', 'cafe', 'weather'],
     blockChance: 0.6,
+    briefs: {
+      todo: {
+        from: l('Daeho (Ops)', '대호 (운영팀)'),
+        subject: l('A todo app for the ops team', '운영팀용 할 일 앱'),
+        body: l(
+          'Hi, Mina showed us her todo app and ops wants our own copy: add tasks, check them off, delete them. No backend, please. We are on the floor all day, so it has to work on phones.',
+          '안녕하세요, 미나 님이 할 일 앱을 보여 줬는데 운영팀도 따로 하나 갖고 싶어요: 할 일 추가, 완료 체크, 삭제. 백엔드는 없이 부탁드려요. 하루 종일 현장에 있어서 휴대폰에서 잘 돼야 해요.',
+        ),
+      },
+      cafe: {
+        from: l('Mr. Park (Cafe Owner)', '박 사장님 (카페 사장)'),
+        subject: l('Bean There website, take two', 'Bean There 홈페이지, 다시 한 번'),
+        body: l(
+          'Hello again. My nephew "improved" the website over the weekend and now nothing works, so please start over. Same as before: people should see our menu and order ahead. Classy, not flashy. Thank you!',
+          '또 연락드려요. 조카가 주말에 홈페이지를 "개선"한다더니 다 망가뜨렸어요. 처음부터 다시 부탁드립니다. 전과 같아요: 손님들이 메뉴를 보고 미리 주문할 수 있어야 하고, 요란한 것보다 고급스럽게요. 감사합니다!',
+        ),
+      },
+    },
     par: 160,
     lessons: [
       l('"Don\'t ask again" saves time... but read what you approve.', '"다시 묻지 않기"는 시간을 아껴 줘요... 하지만 뭘 승인하는지는 읽으세요.'),
@@ -580,6 +608,32 @@ export const STAGES: StageDef[] = [
     subtitle: l('4 agents · plans change mid-shift', '에이전트 4개 · 근무 중 계획 변경'),
     projects: ['cafe', 'rsvp', 'weather', 'todo'],
     blockChance: 0.45,
+    briefs: {
+      cafe: {
+        from: l('Ms. Han (Bean There, 2nd branch)', '한 점장님 (Bean There 2호점)'),
+        subject: l('A website for our second branch', '2호점 홈페이지 부탁드려요'),
+        body: l(
+          'We are opening a second Bean There next week! We need a landing page for the new branch: our menu and order-ahead. Mr. Park says keep it classy, not flashy.',
+          '다음 주에 Bean There 2호점을 열어요! 새 지점 랜딩 페이지가 필요해요: 메뉴와 미리 주문. 박 사장님이 요란하지 않고 고급스럽게 하라고 하셨어요.',
+        ),
+      },
+      weather: {
+        from: l('Jun (Data Team)', '준 (데이터팀)'),
+        subject: l('Weather board for the new lobby', '새 로비용 날씨 보드'),
+        body: l(
+          'We are moving offices and the new lobby gets its own TV. Can we get the weather dashboard again? Seoul, current temp in Celsius, and a 5-day forecast. People will read it from across the room.',
+          '사무실을 옮기는데 새 로비에도 TV가 생겨요. 날씨 대시보드 다시 만들어 주실 수 있나요? 서울, 현재 기온(섭씨), 5일 예보요. 멀리서 보는 사람들이 읽을 수 있어야 해요.',
+        ),
+      },
+      todo: {
+        from: l('Mina (PM)', '미나 (PM)'),
+        subject: l('Todo list for the meetup volunteers', '밋업 자원봉사자용 할 일 목록'),
+        body: l(
+          'The meetup volunteers need a todo list for setup day: add tasks, check them off, delete them. No backend. Everyone will be running around with their phones.',
+          '밋업 자원봉사자들이 준비하는 날 쓸 할 일 목록이 필요해요: 할 일 추가, 완료 체크, 삭제. 백엔드는 없이요. 다들 휴대폰 들고 뛰어다닐 거예요.',
+        ),
+      },
+    },
     par: 195,
     lessons: [
       l('Four agents: press N to jump to whoever needs you.', '에이전트 4개: N을 눌러 손이 필요한 에이전트로 바로 가세요.'),
