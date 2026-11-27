@@ -30,6 +30,7 @@ function Dialog({ title, children, width = 520 }: { title: string; children: Rea
 export function TitleScreen() {
   const progress = useGame((s) => s.progress)
   const openStage = useGame((s) => s.openStage)
+  const sessions = useGame((s) => s.sessions)
   const rank = rankFor(progress.xp)
   const nextRank = RANKS.find((r) => r.xp > progress.xp)
   const { d, tx } = useT()
@@ -55,18 +56,30 @@ export function TitleScreen() {
         <legend>{d.stages}</legend>
         {STAGES.map((st, i) => {
           const locked = i > 0 && !(progress.stars[i - 1] >= 1) && progress.stars[i] === undefined
+          const saved = sessions[i]
+          const left = saved ? Math.max(0, Math.ceil(st.seconds - saved.time)) : 0
           return (
             <div key={st.id} className="stage-row">
               <div>
                 <b>
                   {i}. {tx(st.name)}
                 </b>
-                <div className="small muted">{tx(st.subtitle)}</div>
+                <div className="small muted">
+                  {tx(st.subtitle)}
+                  {saved && <span className="saved-badge">{d.pausedLeft(`${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`)}</span>}
+                </div>
               </div>
               <Stars n={progress.stars[i] ?? 0} />
-              <button className="accent" disabled={locked} onClick={() => openStage(i)}>
-                {locked ? '🔒' : d.play}
-              </button>
+              <div className="stage-btns">
+                {saved && (
+                  <button title={d.restartFresh} onClick={() => openStage(i, true)}>
+                    ↺
+                  </button>
+                )}
+                <button className="accent" disabled={locked} onClick={() => openStage(i)}>
+                  {locked ? '🔒' : saved ? d.resume : d.play}
+                </button>
+              </div>
             </div>
           )
         })}
@@ -179,7 +192,7 @@ export function ResultScreen() {
       </fieldset>
       <div className="result-buttons">
         <button onClick={goTitle}>{d.stageSelectBtn}</button>
-        <button onClick={() => openStage(stageIndex)}>{d.retry}</button>
+        <button onClick={() => openStage(stageIndex, true)}>{d.retry}</button>
         {hasNext && (
           <button className="accent" autoFocus disabled={r.stars < 1 && !(progress.stars[stageIndex] >= 1)} onClick={() => openStage(stageIndex + 1)}>
             {d.nextStage}

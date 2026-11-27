@@ -34,6 +34,19 @@ interface Progress {
   xp: number
 }
 
+/** A paused, in-progress stage. Restored when the player picks that stage again. */
+export interface Session {
+  time: number
+  agents: Agent[]
+  selected: number
+  mails: Mail[]
+  selectedMail?: string
+  focused: WindowId
+  browserTab: string
+  explorerProject: string
+  caught: number
+}
+
 interface GameState {
   screen: Screen
   stageIndex: number
@@ -52,9 +65,13 @@ interface GameState {
   toast?: { text: Text; until: number }
   result?: StageResult
   progress: Progress
+  sessions: Record<number, Session>
 
   goTitle: () => void
-  openStage: (i: number) => void
+  /** Resumes the stage's saved session if there is one, unless `fresh`. */
+  openStage: (i: number, fresh?: boolean) => void
+  /** Snapshot the running stage into `sessions` (and localStorage). */
+  saveSession: () => void
   beginPlay: () => void
   tick: (dt: number) => void
   selectAgent: (i: number) => void
@@ -103,6 +120,26 @@ export function rankFor(xp: number) {
   return r
 }
 
+const SESSIONS_KEY = 'herdr-tycoon:sessions:v1'
+
+function loadSessions(): Record<number, Session> {
+  try {
+    const raw = localStorage.getItem(SESSIONS_KEY)
+    if (raw) return JSON.parse(raw)
+  } catch {
+    /* storage unavailable or corrupt */
+  }
+  return {}
+}
+
+function saveSessions(sessions: Record<number, Session>) {
+  try {
+    localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions))
+  } catch {
+    /* storage unavailable */
+  }
+}
+
 const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)]
 const shuffle = <T,>(arr: T[]) => {
   const a = [...arr]
@@ -114,7 +151,9 @@ const shuffle = <T,>(arr: T[]) => {
 }
 
 let uid = 0
-const nextId = () => `c${++uid}`
+// prefix keeps ids unique against choices restored from a saved session
+const idPrefix = Math.random().toString(36).slice(2, 6)
+const nextId = () => `c${idPrefix}${++uid}`
 
 export function allIssues(projectId: string): Issue[] {
   const p = PROJECTS[projectId]
@@ -267,10 +306,53 @@ export const useGame = create<GameState>((set, get) => ({
   explorerProject: 'todo',
   caught: 0,
   progress: loadProgress(),
+  sessions: loadSessions(),
 
-  goTitle: () => set({ screen: 'title' }),
+  goTitle: () => {
+    get().saveSession()
+    set({ screen: 'title' })
+  },
 
-  openStage: (i) => {
+  saveSession: () => {
+    const s = get()
+    // Only a stage that is underway is worth resuming; a finished one starts over.
+    if ((s.screen !== 'playing' && s.screen !== 'intro') || !s.agents.length) return
+    const session: Session = {
+      time: s.time,
+      agents: s.agents,
+      selected: s.selected,
+      mails: s.mails,
+      selectedMail: s.selectedMail,
+      focused: s.focused,
+      browserTab: s.browserTab,
+      explorerProject: s.explorerProject,
+      caught: s.caught,
+    }
+    const sessions = { ...s.sessions, [s.stageIndex]: session }
+    saveSessions(sessions)
+    set({ sessions })
+  },
+
+  openStage: (i, fresh) => {
+    const saved = get().sessions[i]
+    if (saved && !fresh) {
+      set({
+        ...saved,
+        screen: saved.time > 0 ? 'playing' : 'intro',
+        stageIndex: i,
+        cursor: 0,
+        result: undefined,
+        toast: undefined,
+      })
+      get().focus(saved.focused)
+      return
+    }
+    if (saved) {
+      const sessions = { ...get().sessions }
+      delete sessions[i]
+      saveSessions(sessions)
+      set({ sessions })
+    }
     const stage = STAGES[i]
     const agents = stage.projects.map((p, idx) => newAgent(p, idx))
     const mails: Mail[] = stage.projects.map((pid, idx) => {
@@ -368,7 +450,10 @@ export const useGame = create<GameState>((set, get) => ({
       progress.stars[s.stageIndex] = Math.max(progress.stars[s.stageIndex] ?? 0, result.stars)
       progress.xp += result.xp
       saveProgress(progress)
-      Object.assign(updates, { screen: 'result', result, progress })
+      const sessions = { ...s.sessions }
+      delete sessions[s.stageIndex]
+      saveSessions(sessions)
+      Object.assign(updates, { screen: 'result', result, progress, sessions })
     }
     set(updates)
   },

@@ -91,7 +91,7 @@ export function Taskbar() {
         <div className="start-menu" onMouseLeave={() => setMenu(false)}>
           <div className="start-h">Herdr Tycoon</div>
           {playing && (
-            <div className="start-item" onClick={() => (setMenu(false), openStage(stageIndex))}>
+            <div className="start-item" onClick={() => (setMenu(false), openStage(stageIndex, true))}>
               {d.restartStage}
             </div>
           )}

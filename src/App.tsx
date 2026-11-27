@@ -36,6 +36,20 @@ function useAutoResize() {
   }, [])
 }
 
+/** Save the running stage when the tab is hidden or closed, so a reload can resume it. */
+function useSaveOnLeave() {
+  useEffect(() => {
+    const save = () => useGame.getState().saveSession()
+    const onVis = () => document.visibilityState === 'hidden' && save()
+    window.addEventListener('pagehide', save)
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      window.removeEventListener('pagehide', save)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [])
+}
+
 function useKeyboard() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -74,6 +88,7 @@ export default function App() {
   useGameLoop()
   useKeyboard()
   useAutoResize()
+  useSaveOnLeave()
   const screen = useGame((s) => s.screen)
   const hasStage = useGame((s) => s.agents.length > 0)
   const { d } = useT()
