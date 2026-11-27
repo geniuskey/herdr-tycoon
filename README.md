@@ -40,6 +40,11 @@ npm test        # scoring, store and balance tests (Vitest)
 `←→` switch agent · `↑↓` choose option · `Enter` / `1-4` send · `N` jump to next waiting agent ·
 `B` browser · `E` explorer · `M` mail · `Tab` cycle windows
 
+## Deploy
+
+Every push to `main` runs the tests, builds, and publishes `dist/` to GitHub Pages
+(`.github/workflows/deploy.yml`): <http://pages.euiyun.com/herdr-tycoon/>
+
 ## Languages
 
 English and 한국어. The default follows the browser language. Switch on the title screen or with the
