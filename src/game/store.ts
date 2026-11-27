@@ -25,6 +25,11 @@ export interface StageResult {
   total: number
   polish: number
   caught: number
+  /** Destructive commands approved without reading. */
+  disasters: number
+  /** Seconds until every task was done; undefined if the shift ended early. */
+  finishTime?: number
+  par: number
   stars: number
   xp: number
 }
@@ -45,6 +50,8 @@ export interface Session {
   browserTab: string
   explorerProject: string
   caught: number
+  disasters?: number
+  finishedAt?: number
 }
 
 interface GameState {
@@ -62,6 +69,9 @@ interface GameState {
   browserTab: string
   explorerProject: string
   caught: number
+  disasters: number
+  /** Stage time when every task was first done. The clock that scores the shift stops here. */
+  finishedAt?: number
   toast?: { text: Text; until: number }
   result?: StageResult
   progress: Progress
@@ -180,6 +190,11 @@ function buildChoices(projectId: string): Choice[] {
   )
 }
 
+// A generic prompt skips the inspection, so it must cost more than inspecting + a sharp prompt,
+// even when the player's attention is split across three agents.
+const OK_SECONDS = 13
+const OK_SUCCESS = 0.5
+
 function genChoices(agent: Agent): Choice[] {
   const open = agent.open
   if (open.length === 0) {
@@ -191,7 +206,7 @@ function genChoices(agent: Agent): Choice[] {
   const second = open[1] ? getIssue(agent.projectId, open[1]) : first
   const choices: Choice[] = [
     { id: nextId(), label: first.great, tier: 'great', issueId: first.id, lock: first.visibleIn, seconds: 7 },
-    { id: nextId(), label: second.ok, tier: 'ok', issueId: second.id, seconds: 11 },
+    { id: nextId(), label: second.ok, tier: 'ok', issueId: second.id, seconds: OK_SECONDS },
     { id: nextId(), label: pick(VAGUE_PROMPTS), tier: 'vague', seconds: 14 },
   ]
   if (!open.includes('regression')) {
@@ -289,7 +304,7 @@ function defaultWindows(): WinState[] {
   ]
 }
 
-/** Every project is built, every arrived-or-pending issue fixed, and no agent is mid-task. */
+/** Every project is built, every arrived-or-pending issue fixed, and no agent is mid-task (optional polish doesn't count). */
 export function allDone(agents: Agent[], time: number) {
   return (
     agents.length > 0 &&
@@ -297,15 +312,26 @@ export function allDone(agents: Agent[], time: number) {
       (a) =>
         a.built &&
         a.open.length === 0 &&
-        (a.status === 'done' || a.status === 'idle') &&
+        (a.status === 'done' || a.status === 'idle' || a.current?.tier === 'polish') &&
         (PROJECTS[a.projectId].lateMails ?? []).every((m) => time >= m.at),
     )
   )
 }
 
-function computeResult(agents: Agent[], caught: number, time: number): StageResult {
-  const working = agents.reduce((s, a) => s + a.workingTime, 0)
-  const utilization = Math.min(1, working / (agents.length * Math.max(1, time)))
+/** Busy share of agent time, measured until every task was done (later polish and idling don't count). */
+export function utilizationOf(agents: Agent[], clock: number) {
+  if (!agents.length || clock <= 0) return 0
+  return Math.min(1, agents.reduce((t, a) => t + a.workingTime, 0) / (agents.length * clock))
+}
+
+export const fmtTime = (sec: number) => `${Math.floor(sec / 60)}:${Math.floor(sec % 60).toString().padStart(2, '0')}`
+
+/** 2★ deadline as a multiple of the stage's par time. */
+export const DEADLINE_FACTOR = 1.6
+
+export function computeResult(agents: Agent[], caught: number, disasters: number, time: number, finishedAt: number | undefined, par: number): StageResult {
+  const clock = finishedAt ?? time
+  const utilization = utilizationOf(agents, clock)
   let total = 0
   let fixed = 0
   let polish = 0
@@ -317,10 +343,15 @@ function computeResult(agents: Agent[], caught: number, time: number): StageResu
     polish += a.polish
   }
   const quality = Math.max(0, Math.min(1, (fixed + polish * 0.25) / total))
-  // No time limit, so utilization only counts once real work is done (otherwise ending at 0:03 = 100%).
-  const stars = quality >= 0.6 ? 1 + (utilization >= 0.5 ? 1 : 0) + (utilization >= 0.7 ? 1 : 0) : 0
-  const xp = Math.round(utilization * quality * 100 + fixed * 15 + Math.min(polish, 5) * 6 + caught * 15 + stars * 20)
-  return { utilization, quality, fixed, total, polish, caught, stars, xp }
+  // Stars reward finishing the work fast, not keeping agents busy: a vague prompt keeps the dot
+  // yellow too, but it makes the whole job take longer. Idle time still costs you, through the clock.
+  const finishTime = finishedAt
+  const stars =
+    quality < 0.6 ? 0 : finishTime === undefined || finishTime > par * DEADLINE_FACTOR ? 1 : finishTime > par || disasters > 0 ? 2 : 3
+  const speed = finishTime === undefined ? 0 : Math.min(1, par / finishTime)
+  // Bounded so that grinding polish (and the permission prompts it brings) can't farm XP.
+  const xp = Math.round(speed * 100 + fixed * 15 + Math.min(polish, 5) * 6 + Math.min(caught, agents.length * 2) * 15 + stars * 20)
+  return { utilization, quality, fixed, total, polish, caught, disasters, finishTime, par, stars, xp }
 }
 
 export const useGame = create<GameState>((set, get) => ({
@@ -337,6 +368,7 @@ export const useGame = create<GameState>((set, get) => ({
   browserTab: 'todo',
   explorerProject: 'todo',
   caught: 0,
+  disasters: 0,
   progress: loadProgress(),
   sessions: loadSessions(),
 
@@ -359,6 +391,8 @@ export const useGame = create<GameState>((set, get) => ({
       browserTab: s.browserTab,
       explorerProject: s.explorerProject,
       caught: s.caught,
+      disasters: s.disasters,
+      finishedAt: s.finishedAt,
     }
     const sessions = { ...s.sessions, [s.stageIndex]: session }
     saveSessions(sessions)
@@ -369,6 +403,8 @@ export const useGame = create<GameState>((set, get) => ({
     const saved = get().sessions[i]
     if (saved && !fresh) {
       set({
+        disasters: 0,
+        finishedAt: undefined,
         ...saved,
         screen: saved.time > 0 ? 'playing' : 'intro',
         stageIndex: i,
@@ -407,6 +443,8 @@ export const useGame = create<GameState>((set, get) => ({
       browserTab: stage.projects[0],
       explorerProject: stage.projects[0],
       caught: 0,
+      disasters: 0,
+      finishedAt: undefined,
       result: undefined,
       toast: undefined,
     })
@@ -453,7 +491,7 @@ export const useGame = create<GameState>((set, get) => ({
       }
 
       if (agent.status !== 'working') return agent
-      agent.workingTime += dt
+      if (s.finishedAt === undefined) agent.workingTime += dt
       agent.progress += dt / agent.seconds
 
       if (!agent.blockFired && agent.progress >= 0.45) {
@@ -479,14 +517,15 @@ export const useGame = create<GameState>((set, get) => ({
       return agent
     })
 
-    set({ time, agents, mails, caught })
-    if (!allDone(s.agents, s.time) && allDone(agents, time)) get().showToast(ui((d) => d.allDoneToast))
+    const finishedNow = s.finishedAt === undefined && allDone(agents, time)
+    set({ time, agents, mails, caught, ...(finishedNow ? { finishedAt: time } : {}) })
+    if (finishedNow) get().showToast(ui((d) => d.allDoneToast))
   },
 
   endStage: () => {
     const s = get()
     if (s.screen !== 'playing' || !s.agents.length) return
-    const result = computeResult(s.agents, s.caught, s.time)
+    const result = computeResult(s.agents, s.caught, s.disasters, s.time, s.finishedAt, STAGES[s.stageIndex].par)
     const progress = { ...s.progress, stars: [...s.progress.stars] }
     progress.stars[s.stageIndex] = Math.max(progress.stars[s.stageIndex] ?? 0, result.stars)
     progress.xp += result.xp
@@ -555,6 +594,7 @@ export const useGame = create<GameState>((set, get) => ({
     if (!opt) return
     const agent: Agent = { ...a, blocked: undefined, status: 'working', log: [...a.log, { who: 'sys', text: join((p) => `${p(a.blocked!.detail)} → ${p(opt.label)}`) }] }
     let caught = s.caught
+    let disasters = s.disasters
     const effect: BlockEffect = opt.effect
     switch (effect) {
       case 'always':
@@ -568,6 +608,7 @@ export const useGame = create<GameState>((set, get) => ({
         agent.choices = agent.built ? genChoices(agent) : buildChoices(agent.projectId)
         break
       case 'disaster':
+        disasters += 1
         if (agent.built && !agent.open.includes('regression')) agent.open = ['regression', ...agent.open]
         agent.seconds += 6
         agent.log.push({ who: 'agent', text: ui((d) => d.disasterLog) })
@@ -592,7 +633,7 @@ export const useGame = create<GameState>((set, get) => ({
         agent.log.push({ who: 'sys', text: ui((d) => d.compactLog) })
         break
     }
-    set({ agents: s.agents.map((x, i) => (i === s.selected ? agent : x)), caught, cursor: 0 })
+    set({ agents: s.agents.map((x, i) => (i === s.selected ? agent : x)), caught, disasters, cursor: 0 })
   },
 
   focus: (id) => {
@@ -668,7 +709,7 @@ function complete(agent: Agent, time: number) {
   } else if (c.tier === 'great') {
     fix(c.issueId!)
   } else if (c.tier === 'ok') {
-    if (Math.random() < 0.7 && agent.open.includes(c.issueId!)) fix(c.issueId!)
+    if (Math.random() < OK_SUCCESS && agent.open.includes(c.issueId!)) fix(c.issueId!)
     else log.push({ who: 'agent', text: ui((d) => d.okMiss) })
   } else if (c.tier === 'vague') {
     if (Math.random() < 0.35 && agent.open.length) fix(pick(agent.open))

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "sim": "esbuild scripts/balance-sim.ts --bundle --platform=node --format=esm --inject:scripts/sim-stub.js --define:import.meta.env.BASE_URL='\"/\"' --log-level=warning | node --input-type=module"
   },
   "dependencies": {
     "react": "^19.0.0",

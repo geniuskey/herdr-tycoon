@@ -13,6 +13,18 @@ Goal: keep every herdr dot **yellow** (working).
 | 🔴 red | needs you (permission / question) |
 | 🟢 green | done: review the result, then send the next prompt |
 
+## Scoring
+
+The shift clock stops the moment every task is done (optional polish doesn't count), so the score is about
+how long your agents spend waiting for you, not how long they look busy.
+
+- ★ quality ≥ 60%
+- ★★ every task done within 1.6 × par
+- ★★★ every task done within par, without approving a destructive command
+
+Par times live on each stage in `src/scenarios/index.ts`. After changing timings or prompts, run
+`npm run sim` to check that sharp prompts still beat generic, vague and shortcut play.
+
 ## Run
 
 ```bash

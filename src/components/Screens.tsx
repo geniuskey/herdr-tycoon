@@ -1,4 +1,4 @@
-import { allIssues, rankFor, RANKS, useGame } from '../game/store'
+import { allIssues, DEADLINE_FACTOR, fmtTime, rankFor, RANKS, useGame } from '../game/store'
 import { PROJECTS, STAGES } from '../scenarios'
 import { PREVIEWS } from '../previews'
 import { LangSwitch } from './Shell'
@@ -114,7 +114,7 @@ export function IntroScreen() {
       </fieldset>
       <fieldset>
         <legend>{d.stars}</legend>
-        <div className="small">{d.starRules}</div>
+        <div className="small">{d.starRules(fmtTime(st.par), fmtTime(st.par * DEADLINE_FACTOR))}</div>
       </fieldset>
       <div style={{ textAlign: 'right', marginTop: 10 }}>
         <button className="accent" autoFocus onClick={beginPlay}>
@@ -136,7 +136,15 @@ export function ResultScreen() {
   const { d, tx, lang } = useT()
 
   const verdict =
-    r.utilization >= 0.7 ? d.verdictGreat : r.utilization >= 0.5 ? d.verdictOk : d.verdictBad
+    r.finishTime === undefined
+      ? d.verdictUnfinished
+      : r.finishTime <= r.par
+        ? r.disasters > 0
+          ? d.verdictDisaster
+          : d.verdictGreat
+        : r.finishTime <= r.par * DEADLINE_FACTOR
+          ? d.verdictOk
+          : d.verdictBad
 
   return (
     <Dialog title={d.stageComplete(stageIndex, tx(STAGES[stageIndex].name))} width={760}>
@@ -145,9 +153,9 @@ export function ResultScreen() {
         <div>{verdict}</div>
       </div>
       <div className="result-stats">
-        <div>
-          <div className="big">{Math.round(r.utilization * 100)}%</div>
-          {d.utilization}
+        <div title={`${d.utilization} ${Math.round(r.utilization * 100)}%`}>
+          <div className="big">{r.finishTime === undefined ? d.unfinished : fmtTime(r.finishTime)}</div>
+          {d.finishTime(fmtTime(r.par))}
         </div>
         <div>
           <div className="big">{Math.round(r.quality * 100)}%</div>

@@ -116,6 +116,8 @@ export interface StageDef {
   subtitle: L
   projects: string[]
   blockChance: number
+  /** Seconds to finish every task for 3★ (2★ allows DEADLINE_FACTOR × par). */
+  par: number
   tutorial?: boolean
   lessons: L[]
 }

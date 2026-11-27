@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { allDone, briefRead, isUnlocked, useGame, type WindowId } from '../game/store'
+import { allDone, briefRead, DEADLINE_FACTOR, fmtTime, isUnlocked, useGame, type WindowId } from '../game/store'
 import { setMuted } from '../game/sound'
+import { STAGES } from '../scenarios'
 import { Dot } from './Terminal'
 import { LANGS, useLang, useT } from '../i18n'
 import { activeHint, useIdle } from '../game/hint'
@@ -36,12 +37,6 @@ export function LangSwitch({ compact }: { compact?: boolean }) {
   )
 }
 
-export function useUtilization() {
-  return useGame((s) => {
-    if (!s.agents.length || s.time <= 0) return 0
-    return s.agents.reduce((t, a) => t + a.workingTime, 0) / (s.agents.length * s.time)
-  })
-}
 
 export function Taskbar() {
   const [menu, setMenu] = useState(false)
@@ -56,17 +51,17 @@ export function Taskbar() {
   const unread = useGame((s) => s.mails.filter((m) => !m.read).length)
   const openStage = useGame((s) => s.openStage)
   const goTitle = useGame((s) => s.goTitle)
-  const util = useUtilization()
   const { d } = useT()
   const playing = screen !== 'title' && agents.length > 0
   const endStage = useGame((s) => s.endStage)
   const finished = useGame((s) => allDone(s.agents, s.time))
   const idle = useIdle((s) => s.idle)
   const hinted = useGame((s) => activeHint(s, idle)?.win)
-  const mm = Math.floor(time / 60)
-  const ss = Math.floor(time % 60)
-    .toString()
-    .padStart(2, '0')
+  // The scoring clock stops once every task is done; polishing afterwards is free.
+  const finishedAt = useGame((s) => s.finishedAt)
+  const clock = finishedAt ?? time
+  const par = STAGES[stageIndex]?.par ?? 0
+  const pace = clock <= par ? 'good' : clock <= par * DEADLINE_FACTOR ? 'ok' : 'bad'
 
   return (
     <div className="taskbar">
@@ -111,11 +106,9 @@ export function Taskbar() {
                 <Dot key={a.id} status={a.status} />
               ))}
             </span>
-            <span title={d.utilTitle} className={`util ${util >= 0.7 ? 'good' : util >= 0.5 ? 'ok' : 'bad'}`}>
-              {d.busy(Math.round(util * 100))}
-            </span>
-            <span className="tray-time">
-              {mm}:{ss}
+            <span title={d.parTitle(fmtTime(par), fmtTime(par * DEADLINE_FACTOR))} className={`util ${pace}`}>
+              {finishedAt !== undefined ? '⏹ ' : ''}
+              {fmtTime(clock)} / {d.par} {fmtTime(par)}
             </span>
             <button className={`tray-end ${finished ? 'ready' : ''}`} title={d.endShiftTitle} onClick={endStage}>
               {d.endShift}

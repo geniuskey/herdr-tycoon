@@ -416,6 +416,7 @@ export const STAGES: StageDef[] = [
     subtitle: l('Tutorial · 1 agent', '튜토리얼 · 에이전트 1개'),
     projects: ['todo'],
     blockChance: 0.25,
+    par: 80,
     tutorial: true,
     lessons: [
       l('Start in the inbox: the client mail tells you what to build.', '받은 편지함부터: 고객 메일이 뭘 만들지 알려 줘요.'),
@@ -430,6 +431,7 @@ export const STAGES: StageDef[] = [
     subtitle: l('2 agents in parallel', '에이전트 2개 동시 운영'),
     projects: ['todo', 'cafe'],
     blockChance: 0.35,
+    par: 120,
     lessons: [
       l('While one agent works, feed the other one.', '한 에이전트가 일하는 동안 다른 에이전트에게 일을 주세요.'),
       l('Red dot = the agent is waiting for your approval. Answer fast!', '빨간 점 = 에이전트가 승인을 기다리는 중. 빨리 답하세요!'),
@@ -442,6 +444,7 @@ export const STAGES: StageDef[] = [
     subtitle: l('3 agents · lots of approvals', '에이전트 3개 · 승인 폭탄'),
     projects: ['todo', 'cafe', 'weather'],
     blockChance: 0.6,
+    par: 160,
     lessons: [
       l('"Don\'t ask again" saves time... but read what you approve.', '"다시 묻지 않기"는 시간을 아껴 줘요... 하지만 뭘 승인하는지는 읽으세요.'),
       l('Never approve destructive commands blindly.', '파괴적인 명령은 절대 무작정 승인하지 마세요.'),
