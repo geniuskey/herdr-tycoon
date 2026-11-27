@@ -23,13 +23,16 @@ how long your agents spend waiting for you, not how long they look busy.
 - ★★★ every task done within par, without approving a destructive command
 
 Par times live on each stage in `src/scenarios/index.ts`. After changing timings or prompts, run
-`npm run sim` to check that sharp prompts still beat generic, vague and shortcut play.
+`npm test`: `src/game/balance.test.ts` plays every stage with scripted players (`src/game/autoplay.ts`)
+and fails if sharp prompts stop beating generic, vague and shortcut play. `npm run sim` prints the
+full numbers (`N=50 npm run sim` for a quicker run).
 
 ## Run
 
 ```bash
 npm install
 npm run dev
+npm test        # scoring, store and balance tests (Vitest)
 ```
 
 ## Controls

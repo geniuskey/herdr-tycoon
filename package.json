@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "sim": "esbuild scripts/balance-sim.ts --bundle --platform=node --format=esm --inject:scripts/sim-stub.js --define:import.meta.env.BASE_URL='\"/\"' --log-level=warning | node --input-type=module"
+    "sim": "esbuild scripts/balance-sim.ts --bundle --platform=node --format=esm --inject:scripts/sim-stub.js --define:import.meta.env.BASE_URL='\"/\"' --log-level=warning | node --input-type=module",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "react": "^19.0.0",
@@ -19,6 +21,7 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^5.0.0",
     "typescript": "^5.8.0",
-    "vite": "^7.0.0"
+    "vite": "^7.0.0",
+    "vitest": "^3.2.7"
   }
 }
