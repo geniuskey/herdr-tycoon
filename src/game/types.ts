@@ -115,7 +115,6 @@ export interface StageDef {
   name: L
   subtitle: L
   projects: string[]
-  seconds: number
   blockChance: number
   tutorial?: boolean
   lessons: L[]

@@ -57,7 +57,7 @@ export function TitleScreen() {
         {STAGES.map((st, i) => {
           const locked = i > 0 && !(progress.stars[i - 1] >= 1) && progress.stars[i] === undefined
           const saved = sessions[i]
-          const left = saved ? Math.max(0, Math.ceil(st.seconds - saved.time)) : 0
+          const played = saved ? Math.floor(saved.time) : 0
           return (
             <div key={st.id} className="stage-row">
               <div>
@@ -66,7 +66,7 @@ export function TitleScreen() {
                 </b>
                 <div className="small muted">
                   {tx(st.subtitle)}
-                  {saved && <span className="saved-badge">{d.pausedLeft(`${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`)}</span>}
+                  {saved && <span className="saved-badge">{d.paused(`${Math.floor(played / 60)}:${String(played % 60).padStart(2, '0')}`)}</span>}
                 </div>
               </div>
               <Stars n={progress.stars[i] ?? 0} />
@@ -99,7 +99,7 @@ export function IntroScreen() {
   return (
     <Dialog title={d.stageTitle(stageIndex, tx(st.name))}>
       <p>
-        <b>{tx(st.subtitle)}</b> · {d.minutes(Math.round(st.seconds / 60))}
+        <b>{tx(st.subtitle)}</b>
       </p>
       <p>
         {d.projectsLabel}: {st.projects.map((p) => tx(PROJECTS[p].title)).join(', ')}

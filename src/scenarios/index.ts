@@ -415,7 +415,6 @@ export const STAGES: StageDef[] = [
     name: l('First Day at Work', '출근 첫날'),
     subtitle: l('Tutorial · 1 agent', '튜토리얼 · 에이전트 1개'),
     projects: ['todo'],
-    seconds: 120,
     blockChance: 0.25,
     tutorial: true,
     lessons: [
@@ -429,7 +428,6 @@ export const STAGES: StageDef[] = [
     name: l('Side Hustle', '부업'),
     subtitle: l('2 agents in parallel', '에이전트 2개 동시 운영'),
     projects: ['todo', 'cafe'],
-    seconds: 180,
     blockChance: 0.35,
     lessons: [
       l('While one agent works, feed the other one.', '한 에이전트가 일하는 동안 다른 에이전트에게 일을 주세요.'),
@@ -442,7 +440,6 @@ export const STAGES: StageDef[] = [
     name: l('Permission Hell', '권한 지옥'),
     subtitle: l('3 agents · lots of approvals', '에이전트 3개 · 승인 폭탄'),
     projects: ['todo', 'cafe', 'weather'],
-    seconds: 180,
     blockChance: 0.6,
     lessons: [
       l('"Don\'t ask again" saves time... but read what you approve.', '"다시 묻지 않기"는 시간을 아껴 줘요... 하지만 뭘 승인하는지는 읽으세요.'),

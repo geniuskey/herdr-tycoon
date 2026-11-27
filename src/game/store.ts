@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Agent, BlockEffect, Choice, FileNode, Issue, LogLine, Mail, StageDef } from './types'
+import type { Agent, BlockEffect, Choice, FileNode, Issue, LogLine, Mail } from './types'
 import { POLISH_PROMPTS, PROJECTS, REGRESSION, STAGES, TRAP_PROMPTS, VAGUE_PROMPTS } from '../scenarios'
 import { CONTEXT_EVENT, makeBlockedEvent } from '../scenarios/events'
 import { playSound } from './sound'
@@ -70,6 +70,8 @@ interface GameState {
   goTitle: () => void
   /** Resumes the stage's saved session if there is one, unless `fresh`. */
   openStage: (i: number, fresh?: boolean) => void
+  /** Finish the shift: score the stage and show the result screen. */
+  endStage: () => void
   /** Snapshot the running stage into `sessions` (and localStorage). */
   saveSession: () => void
   beginPlay: () => void
@@ -272,22 +274,37 @@ function defaultWindows(): WinState[] {
   ]
 }
 
-function computeResult(stage: StageDef, agents: Agent[], caught: number): StageResult {
+/** Every project is built, every arrived-or-pending issue fixed, and no agent is mid-task. */
+export function allDone(agents: Agent[], time: number) {
+  return (
+    agents.length > 0 &&
+    agents.every(
+      (a) =>
+        a.built &&
+        a.open.length === 0 &&
+        (a.status === 'done' || a.status === 'idle') &&
+        (PROJECTS[a.projectId].lateMails ?? []).every((m) => time >= m.at),
+    )
+  )
+}
+
+function computeResult(agents: Agent[], caught: number, time: number): StageResult {
   const working = agents.reduce((s, a) => s + a.workingTime, 0)
-  const utilization = Math.min(1, working / (agents.length * stage.seconds))
+  const utilization = Math.min(1, working / (agents.length * Math.max(1, time)))
   let total = 0
   let fixed = 0
   let polish = 0
   for (const a of agents) {
     const p = PROJECTS[a.projectId]
-    total += p.issues.length + (p.lateMails ?? []).filter((m) => m.at <= stage.seconds).length + 1 // +1 for build
+    total += p.issues.length + (p.lateMails ?? []).filter((m) => m.at <= time).length + 1 // +1 for build
     fixed += a.fixed.filter((f) => f !== 'regression').length + (a.built ? 1 : 0)
     if (a.open.includes('regression')) fixed -= 1
     polish += a.polish
   }
   const quality = Math.max(0, Math.min(1, (fixed + polish * 0.25) / total))
-  const stars = (utilization >= 0.5 ? 1 : 0) + (quality >= 0.6 ? 1 : 0) + (utilization >= 0.7 ? 1 : 0)
-  const xp = Math.round(utilization * 100 + fixed * 15 + Math.min(polish, 5) * 6 + caught * 15 + stars * 20)
+  // No time limit, so utilization only counts once real work is done (otherwise ending at 0:03 = 100%).
+  const stars = quality >= 0.6 ? 1 + (utilization >= 0.5 ? 1 : 0) + (utilization >= 0.7 ? 1 : 0) : 0
+  const xp = Math.round(utilization * quality * 100 + fixed * 15 + Math.min(polish, 5) * 6 + caught * 15 + stars * 20)
   return { utilization, quality, fixed, total, polish, caught, stars, xp }
 }
 
@@ -393,7 +410,7 @@ export const useGame = create<GameState>((set, get) => ({
     // late mails
     for (const pid of stage.projects) {
       for (const lm of PROJECTS[pid].lateMails ?? []) {
-        if (s.time < lm.at && time >= lm.at && lm.at < stage.seconds) {
+        if (s.time < lm.at && time >= lm.at) {
           mails.push({ id: `late-${pid}-${lm.issue.id}`, from: lm.from, subject: lm.subject, body: lm.body, read: false, at: time, projectId: pid, issueId: lm.issue.id })
         }
       }
@@ -437,25 +454,28 @@ export const useGame = create<GameState>((set, get) => ({
       }
 
       if (agent.progress >= 1) {
-        complete(agent, time, stage.seconds)
+        complete(agent, time)
         playSound('done')
       }
       return agent
     })
 
-    const updates: Partial<GameState> = { time, agents, mails, caught }
-    if (time >= stage.seconds) {
-      const result = computeResult(stage, agents, caught)
-      const progress = { ...s.progress, stars: [...s.progress.stars] }
-      progress.stars[s.stageIndex] = Math.max(progress.stars[s.stageIndex] ?? 0, result.stars)
-      progress.xp += result.xp
-      saveProgress(progress)
-      const sessions = { ...s.sessions }
-      delete sessions[s.stageIndex]
-      saveSessions(sessions)
-      Object.assign(updates, { screen: 'result', result, progress, sessions })
-    }
-    set(updates)
+    set({ time, agents, mails, caught })
+    if (!allDone(s.agents, s.time) && allDone(agents, time)) get().showToast(ui((d) => d.allDoneToast))
+  },
+
+  endStage: () => {
+    const s = get()
+    if (s.screen !== 'playing' || !s.agents.length) return
+    const result = computeResult(s.agents, s.caught, s.time)
+    const progress = { ...s.progress, stars: [...s.progress.stars] }
+    progress.stars[s.stageIndex] = Math.max(progress.stars[s.stageIndex] ?? 0, result.stars)
+    progress.xp += result.xp
+    saveProgress(progress)
+    const sessions = { ...s.sessions }
+    delete sessions[s.stageIndex]
+    saveSessions(sessions)
+    set({ screen: 'result', result, progress, sessions })
   },
 
   selectAgent: (i) => set({ selected: i, cursor: 0, browserTab: get().agents[i].projectId, explorerProject: get().agents[i].projectId }),
@@ -592,7 +612,7 @@ export const useGame = create<GameState>((set, get) => ({
 }))
 
 /** Finish the agent's current task. Mutates the (already-copied) agent. */
-function complete(agent: Agent, time: number, stageSeconds: number) {
+function complete(agent: Agent, time: number) {
   const c = agent.current!
   const p = PROJECTS[agent.projectId]
   const log: LogLine[] = [...agent.log]
@@ -617,7 +637,7 @@ function complete(agent: Agent, time: number, stageSeconds: number) {
   if (c.build) {
     const b = p.buildChoices.find((x) => x.label.en === c.label.en)!
     agent.built = true
-    const arrived = (p.lateMails ?? []).filter((m) => m.at <= time && m.at < stageSeconds).map((m) => m.issue.id)
+    const arrived = (p.lateMails ?? []).filter((m) => m.at <= time).map((m) => m.issue.id)
     agent.open = [...p.issues.map((i) => i.id), ...arrived]
     log.push({ who: 'tool', text: `Bash(npm create vite@latest ${p.name})` })
     for (const f of p.baseFiles.slice(0, 3)) log.push({ who: 'tool', text: `Write(${f.path})` })

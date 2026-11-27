@@ -1093,9 +1093,27 @@ button.accent:hover {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
 }
-.tray-time.urgent {
-  color: #c42b1c;
-  animation: blink 0.8s steps(2) infinite;
+.tray-end {
+  border: 1px solid var(--stroke);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.6);
+  padding: 3px 10px;
+  font-size: 12px;
+  min-height: 0;
+}
+.tray-end:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+.tray-end.ready {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  animation: end-pulse 1.4s ease-in-out infinite;
+}
+@keyframes end-pulse {
+  50% {
+    box-shadow: 0 0 0 4px rgba(0, 103, 192, 0.25);
+  }
 }
 .tray-btn {
   border: 0;

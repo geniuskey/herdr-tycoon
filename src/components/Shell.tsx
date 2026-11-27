@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
-import { isUnlocked, useGame, type WindowId } from '../game/store'
+import { allDone, isUnlocked, useGame, type WindowId } from '../game/store'
 import { setMuted } from '../game/sound'
-import { STAGES } from '../scenarios'
 import { Dot } from './Terminal'
 import { LANGS, useLang, useT } from '../i18n'
 
@@ -59,9 +58,10 @@ export function Taskbar() {
   const util = useUtilization()
   const { d } = useT()
   const playing = screen !== 'title' && agents.length > 0
-  const left = Math.max(0, STAGES[stageIndex].seconds - time)
-  const mm = Math.floor(left / 60)
-  const ss = Math.floor(left % 60)
+  const endStage = useGame((s) => s.endStage)
+  const finished = useGame((s) => allDone(s.agents, s.time))
+  const mm = Math.floor(time / 60)
+  const ss = Math.floor(time % 60)
     .toString()
     .padStart(2, '0')
 
@@ -111,9 +111,12 @@ export function Taskbar() {
             <span title={d.utilTitle} className={`util ${util >= 0.7 ? 'good' : util >= 0.5 ? 'ok' : 'bad'}`}>
               {d.busy(Math.round(util * 100))}
             </span>
-            <span className={`tray-time ${left < 20 ? 'urgent' : ''}`}>
+            <span className="tray-time">
               {mm}:{ss}
             </span>
+            <button className={`tray-end ${finished ? 'ready' : ''}`} title={d.endShiftTitle} onClick={endStage}>
+              {d.endShift}
+            </button>
           </>
         )}
         <LangSwitch compact />
@@ -153,7 +156,9 @@ export function Herdy() {
   if (!a) return null
   const briefRead = s.mails.some((m) => m.read)
   let text: string
-  if (!a.built && a.status === 'idle') {
+  if (allDone(s.agents, s.time)) {
+    text = d.herdyAllDone
+  } else if (!a.built && a.status === 'idle') {
     text = d.herdyIdle
   } else if (a.status === 'working' && !briefRead) {
     text = d.herdyWorking
