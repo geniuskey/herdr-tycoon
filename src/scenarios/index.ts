@@ -418,6 +418,7 @@ export const STAGES: StageDef[] = [
     blockChance: 0.25,
     tutorial: true,
     lessons: [
+      l('Start in the inbox: the client mail tells you what to build.', '받은 편지함부터: 고객 메일이 뭘 만들지 알려 줘요.'),
       l('○ idle = wasted time. ● yellow = working = good.', '○ 대기 = 시간 낭비. ● 노란색 = 작업 중 = 좋음.'),
       l('Check results in the Browser and Explorer to unlock ⭐ prompts.', '브라우저와 탐색기에서 결과를 확인하면 ⭐ 프롬프트가 열려요.'),
       l('Vague prompts are slow. Shortcut prompts come back to bite you.', '모호한 프롬프트는 느려요. 지름길 프롬프트는 나중에 발목을 잡아요.'),

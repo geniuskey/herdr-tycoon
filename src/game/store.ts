@@ -168,7 +168,15 @@ export function getIssue(projectId: string, id: string): Issue {
 
 function buildChoices(projectId: string): Choice[] {
   return shuffle(
-    PROJECTS[projectId].buildChoices.map((b) => ({ id: nextId(), label: b.label, tier: b.tier, seconds: b.seconds, build: true })),
+    // The sharp first prompt needs the client's brief: read the mail before you build.
+    PROJECTS[projectId].buildChoices.map((b) => ({
+      id: nextId(),
+      label: b.label,
+      tier: b.tier,
+      seconds: b.seconds,
+      build: true,
+      lock: b.tier === 'great' ? ('mail' as const) : undefined,
+    })),
   )
 }
 
@@ -211,9 +219,16 @@ const REMOVALS: Record<string, (p: string) => boolean> = {
 }
 
 
+export const briefMailId = (projectId: string) => `m-${projectId}`
+
+export function briefRead(state: Pick<GameState, 'mails'>, projectId: string) {
+  return state.mails.some((m) => m.id === briefMailId(projectId) && m.read)
+}
+
 /** Is a locked "great" choice visible to the player right now? */
 export function isUnlocked(state: Pick<GameState, 'mails'>, agent: Agent, choice: Choice) {
   if (!choice.lock) return true
+  if (choice.build) return briefRead(state, agent.projectId)
   if (choice.lock === 'mail') {
     return state.mails.some((m) => m.projectId === agent.projectId && m.issueId === choice.issueId && m.read)
   }
@@ -375,7 +390,7 @@ export const useGame = create<GameState>((set, get) => ({
     const mails: Mail[] = stage.projects.map((pid, idx) => {
       const p = PROJECTS[pid]
       const mailIssue = p.issues.find((x) => x.visibleIn === 'mail')
-      return { id: `m-${pid}`, ...p.brief, read: false, at: -idx, projectId: pid, issueId: mailIssue?.id }
+      return { id: briefMailId(pid), ...p.brief, read: false, at: -idx, projectId: pid, issueId: mailIssue?.id }
     })
     set({
       screen: 'intro',
@@ -397,7 +412,11 @@ export const useGame = create<GameState>((set, get) => ({
     })
   },
 
-  beginPlay: () => set({ screen: 'playing' }),
+  beginPlay: () => {
+    set({ screen: 'playing' })
+    // Every job starts in the inbox: bring it to the front (the player opens the brief themselves).
+    if (get().mails.some((m) => !m.read)) get().focus('mail')
+  },
 
   tick: (dt) => {
     const s = get()

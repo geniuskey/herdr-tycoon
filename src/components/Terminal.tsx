@@ -178,7 +178,7 @@ function ClaudePane({ agent }: { agent: Agent }) {
               <div key={c.id} className={`cc-opt ${cursor === i ? 'sel' : ''} ${unlocked ? '' : 'locked'}`} onMouseEnter={() => setCursor(i)} onClick={() => send(i)}>
                 <span className="cc-caret">{cursor === i ? '❯' : ' '}</span>
                 <span className="cc-num">{i + 1}.</span>
-                <span>{unlocked ? tx(c.label) : d.lockedChoice(d.place[c.lock!])}</span>
+                <span>{unlocked ? tx(c.label) : c.build ? d.lockedBrief : d.lockedChoice(d.place[c.lock!])}</span>
               </div>
             )
           })}

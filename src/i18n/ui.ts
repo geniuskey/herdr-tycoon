@@ -7,6 +7,13 @@ const en = {
   place: { browser: 'Browser (B)', explorer: 'Explorer (E)', mail: 'Mail (M)' } as Record<Place, string>,
   status: { idle: 'idle', working: 'working', blocked: 'blocked', done: 'done' },
   language: 'Language',
+  hint: {
+    brief: '👀 Work starts here: read the client brief first',
+    blocked: '👀 An agent is waiting for your answer',
+    waiting: '👀 Send the next prompt here',
+    inspect: '👀 Check the result here to unlock a sharper prompt',
+    mail: '👀 You have unread mail',
+  } as Record<'brief' | 'blocked' | 'waiting' | 'inspect' | 'mail', string>,
 
   // desktop
   recycleBin: 'Recycle Bin',
@@ -46,6 +53,7 @@ const en = {
   pickNext: 'Pick your next prompt (↑↓ ⏎)',
   pickFirst: 'New task: pick your first prompt (↑↓ ⏎)',
   lockedChoice: (where: string) => `🔒 A sharper prompt is available. Check the ${where} to see what's wrong.`,
+  lockedBrief: '🔒 Read the client brief in Mail (M) to unlock the sharp first prompt.',
   slowCtx: ' · slow (context full)',
   acceptEdits: ' · ⏵⏵ accept edits on',
   keysWorkspace: '←→ workspace · ↑↓ option',
@@ -88,6 +96,7 @@ const en = {
   unmute: 'Unmute',
 
   // herdy
+  herdyBrief: 'Every job starts in the inbox. Read the client mail (M) first: it tells you what to build and unlocks the ⭐ sharp first prompt.',
   herdyIdle: 'Your agent is idle (○). Idle agents are wasted time! Pick a prompt with ↑↓ and press Enter, or just click one.',
   herdyWorking: 'Spinner = working. That is what you want! While it works, read the client mail (M). It has useful hints.',
   herdyBlocked: 'Red = the agent needs you. Read what it is asking before you approve!',
@@ -139,6 +148,13 @@ const ko: Dict = {
   place: { browser: '브라우저(B)', explorer: '탐색기(E)', mail: '메일(M)' },
   status: { idle: '대기', working: '작업 중', blocked: '응답 필요', done: '완료' },
   language: '언어',
+  hint: {
+    brief: '👀 일의 시작: 고객 메일부터 읽으세요',
+    blocked: '👀 에이전트가 답을 기다려요',
+    waiting: '👀 여기서 다음 프롬프트를 보내세요',
+    inspect: '👀 여기서 결과를 확인하면 더 정확한 프롬프트가 열려요',
+    mail: '👀 안 읽은 메일이 있어요',
+  },
 
   recycleBin: '휴지통',
   thisPC: '내 PC',
@@ -175,6 +191,7 @@ const ko: Dict = {
   pickNext: '다음 프롬프트를 고르세요 (↑↓ ⏎)',
   pickFirst: '새 작업: 첫 프롬프트를 고르세요 (↑↓ ⏎)',
   lockedChoice: (where) => `🔒 더 정확한 프롬프트가 있어요. ${where}에서 뭐가 문제인지 확인하세요.`,
+  lockedBrief: '🔒 메일(M)에서 고객 요청을 읽으면 정확한 첫 프롬프트가 열려요.',
   slowCtx: ' · 느림 (컨텍스트 가득)',
   acceptEdits: ' · ⏵⏵ 편집 자동 승인',
   keysWorkspace: '←→ 워크스페이스 · ↑↓ 선택',
@@ -212,6 +229,7 @@ const ko: Dict = {
   mute: '음소거',
   unmute: '음소거 해제',
 
+  herdyBrief: '모든 일은 받은 편지함에서 시작해요. 고객 메일(M)부터 읽으세요: 뭘 만들어야 하는지 알려 주고, ⭐ 정확한 첫 프롬프트가 열려요.',
   herdyIdle: '에이전트가 놀고 있어요 (○). 노는 에이전트는 시간 낭비! ↑↓로 프롬프트를 고르고 Enter를 누르거나, 그냥 클릭하세요.',
   herdyWorking: '스피너 = 작업 중. 바로 이 상태를 유지해야 해요! 일하는 동안 고객 메일(M)을 읽어 보세요. 유용한 힌트가 있어요.',
   herdyBlocked: '빨간색 = 에이전트가 당신을 기다려요. 승인하기 전에 뭘 묻는지 꼭 읽어 보세요!',

@@ -4,6 +4,7 @@ import { Terminal } from './components/Terminal'
 import { Browser, Explorer, MailApp } from './components/Apps'
 import { Taskbar, Toast } from './components/Shell'
 import { useT } from './i18n'
+import { markActive } from './game/hint'
 import { IntroScreen, ResultScreen, TitleScreen } from './components/Screens'
 
 function useGameLoop() {
@@ -50,6 +51,25 @@ function useSaveOnLeave() {
   }, [])
 }
 
+/** Any key press, click or scroll counts as activity; a quiet spell shows the window hint. */
+function useActivity() {
+  const screen = useGame((s) => s.screen)
+  useEffect(() => {
+    markActive()
+  }, [screen])
+  useEffect(() => {
+    const opts = { capture: true, passive: true }
+    window.addEventListener('keydown', markActive, opts)
+    window.addEventListener('pointerdown', markActive, opts)
+    window.addEventListener('wheel', markActive, opts)
+    return () => {
+      window.removeEventListener('keydown', markActive, opts)
+      window.removeEventListener('pointerdown', markActive, opts)
+      window.removeEventListener('wheel', markActive, opts)
+    }
+  }, [])
+}
+
 function useKeyboard() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -73,7 +93,9 @@ function useKeyboard() {
         g.focus('explorer')
       } else if (k === 'm' || k === 'M') {
         g.focus('mail')
-        const target = g.mails.filter((m) => !m.read).sort((a, b) => b.at - a.at)[0]
+        // Prefer the selected agent's unread mail (e.g. its brief), then the newest unread.
+        const unread = g.mails.filter((m) => !m.read).sort((a, b) => b.at - a.at)
+        const target = unread.find((m) => m.projectId === agent?.projectId) ?? unread[0]
         if (target) g.readMail(target.id)
       } else if (k === 't' || k === 'T' || k === 'Escape') g.focus('terminal')
       else return
@@ -89,6 +111,7 @@ export default function App() {
   useKeyboard()
   useAutoResize()
   useSaveOnLeave()
+  useActivity()
   const screen = useGame((s) => s.screen)
   const hasStage = useGame((s) => s.agents.length > 0)
   const { d } = useT()

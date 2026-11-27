@@ -125,6 +125,53 @@ button.accent:hover {
 .win.is-focused {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.38);
 }
+
+/* ---------- idle hint: points at the window to look at next ---------- */
+.win.hint {
+  border-color: #f5b800;
+  animation: win-hint 1.6s ease-in-out infinite;
+}
+@keyframes win-hint {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px rgba(245, 184, 0, 0.9), 0 0 18px 2px rgba(245, 184, 0, 0.35), 0 12px 40px rgba(0, 0, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(245, 184, 0, 0.55), 0 0 36px 8px rgba(245, 184, 0, 0.55), 0 12px 40px rgba(0, 0, 0, 0.3);
+  }
+}
+.hint-label {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  max-width: calc(100% - 24px);
+  background: #f5b800;
+  color: #1f1600;
+  font: 600 13px var(--ui);
+  padding: 6px 14px;
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  animation: hint-bob 1.6s ease-in-out infinite;
+  z-index: 5;
+}
+@keyframes hint-bob {
+  50% {
+    transform: translate(-50%, -4px);
+  }
+}
+.tb-app.hint {
+  animation: tb-hint 1.6s ease-in-out infinite;
+}
+@keyframes tb-hint {
+  50% {
+    background: rgba(245, 184, 0, 0.45);
+  }
+}
 .win-titlebar {
   height: 34px;
   flex: none;

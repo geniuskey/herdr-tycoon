@@ -1,5 +1,7 @@
 import { useRef, type ReactNode } from 'react'
 import { useGame, type WindowId } from '../game/store'
+import { useHint } from '../game/hint'
+import { useT } from '../i18n'
 
 export function Window({
   id,
@@ -24,12 +26,14 @@ export function Window({
   const moveWindow = useGame((s) => s.moveWindow)
   const minimize = useGame((s) => s.minimize)
   const drag = useRef<{ dx: number; dy: number } | null>(null)
+  const hint = useHint(id)
+  const { d } = useT()
 
   if (win.minimized) return null
 
   return (
     <div
-      className={`win ${dark ? 'win-dark' : ''} ${focused ? 'is-focused' : ''}`}
+      className={`win ${dark ? 'win-dark' : ''} ${focused ? 'is-focused' : ''} ${hint ? 'hint' : ''}`}
       style={{ left: Math.round(win.x), top: Math.round(win.y), width: Math.max(200, Math.round(win.w)), height: Math.max(140, Math.round(win.h)), zIndex: win.z }}
       onPointerDownCapture={() => !focused && focus(id)}
     >
@@ -66,6 +70,7 @@ export function Window({
         </div>
       </div>
       <div className={`win-body ${bodyClass ?? ''}`}>{children}</div>
+      {hint && <div className="hint-label">{d.hint[hint]}</div>}
     </div>
   )
 }

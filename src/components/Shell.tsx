@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { allDone, isUnlocked, useGame, type WindowId } from '../game/store'
+import { allDone, briefRead, isUnlocked, useGame, type WindowId } from '../game/store'
 import { setMuted } from '../game/sound'
 import { Dot } from './Terminal'
 import { LANGS, useLang, useT } from '../i18n'
+import { activeHint, useIdle } from '../game/hint'
 
 const APPS: { id: WindowId; icon: string }[] = [
   { id: 'terminal', icon: '❯_' },
@@ -60,6 +61,8 @@ export function Taskbar() {
   const playing = screen !== 'title' && agents.length > 0
   const endStage = useGame((s) => s.endStage)
   const finished = useGame((s) => allDone(s.agents, s.time))
+  const idle = useIdle((s) => s.idle)
+  const hinted = useGame((s) => activeHint(s, idle)?.win)
   const mm = Math.floor(time / 60)
   const ss = Math.floor(time % 60)
     .toString()
@@ -80,7 +83,7 @@ export function Taskbar() {
           APPS.map((a) => {
             const w = windows.find((x) => x.id === a.id)!
             return (
-              <button key={a.id} className={`tb-app ${focused === a.id && !w.minimized ? 'active' : ''} ${w.minimized ? '' : 'open'}`} onClick={() => focus(a.id)} title={d.apps[a.id]}>
+              <button key={a.id} className={`tb-app ${focused === a.id && !w.minimized ? 'active' : ''} ${w.minimized ? '' : 'open'} ${hinted === a.id ? 'hint' : ''}`} onClick={() => focus(a.id)} title={d.apps[a.id]}>
                 <span className={a.id === 'terminal' ? 'tb-term' : ''}>{a.icon}</span>
                 {a.id === 'mail' && unread > 0 && <span className="tb-badge">{unread}</span>}
               </button>
@@ -154,13 +157,15 @@ export function Herdy() {
   const { d } = useT()
   const a = s.agents[0]
   if (!a) return null
-  const briefRead = s.mails.some((m) => m.read)
+  const anyMailRead = s.mails.some((m) => m.read)
   let text: string
   if (allDone(s.agents, s.time)) {
     text = d.herdyAllDone
+  } else if (!a.built && a.status === 'idle' && !briefRead(s, a.projectId)) {
+    text = d.herdyBrief
   } else if (!a.built && a.status === 'idle') {
     text = d.herdyIdle
-  } else if (a.status === 'working' && !briefRead) {
+  } else if (a.status === 'working' && !anyMailRead) {
     text = d.herdyWorking
   } else if (a.status === 'blocked') {
     text = d.herdyBlocked
