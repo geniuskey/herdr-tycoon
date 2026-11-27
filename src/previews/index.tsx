@@ -1,9 +1,11 @@
 import type { CSSProperties, ReactNode } from 'react'
+import type { Lang } from '../i18n'
 
 export interface PreviewProps {
   open: string[]
   fixed: string[]
   polish: number
+  lang: Lang
 }
 
 const has = (list: string[], id: string) => list.includes(id)
@@ -20,15 +22,16 @@ function ConsoleStrip({ lines }: { lines: string[] }) {
 }
 
 /* ---------------- Todo ---------------- */
-function TodoPreview({ open, fixed }: PreviewProps) {
+function TodoPreview({ open, fixed, lang }: PreviewProps) {
+  const ko = lang === 'ko'
   const ugly = has(open, 'ugly')
   const noDelete = has(open, 'nodelete')
   const mobile = has(open, 'mobile')
   const persist = has(open, 'persist')
   const tasks = [
-    { t: 'Buy oat milk', done: true },
-    { t: 'Review PR #42', done: false },
-    { t: 'Water the office plant', done: false },
+    { t: ko ? '귀리 우유 사기' : 'Buy oat milk', done: true },
+    { t: ko ? 'PR #42 리뷰' : 'Review PR #42', done: false },
+    { t: ko ? '사무실 화분 물 주기' : 'Water the office plant', done: false },
   ]
   const wrap: CSSProperties = ugly
     ? { fontFamily: '"Comic Sans MS", "Comic Sans", cursive', background: 'linear-gradient(90deg,#ff00ff,#00ffff)', color: '#39ff14', minHeight: '100%', padding: 12 }
@@ -40,16 +43,16 @@ function TodoPreview({ open, fixed }: PreviewProps) {
     <div style={{ ...wrap, overflowX: 'auto' }}>
       <div style={card}>
         <h1 style={ugly ? { fontSize: 34, textShadow: '3px 3px 0 #f00', margin: 0, color: '#ff0080' } : { fontSize: 22, margin: '0 0 12px', fontWeight: 600 }}>
-          {ugly ? 'MY TODOS!!!!!' : 'Team Todos'}
+          {ugly ? (ko ? '내 할 일!!!!!' : 'MY TODOS!!!!!') : ko ? '팀 할 일' : 'Team Todos'}
         </h1>
         <div style={{ display: 'flex', gap: 8, margin: '10px 0' }}>
           <input
             readOnly
-            placeholder="What needs doing?"
+            placeholder={ko ? '무엇을 해야 하나요?' : 'What needs doing?'}
             style={ugly ? { width: 90, border: '3px solid blue' } : { flex: 1, padding: '10px 12px', border: '1px solid #d0d5dd', borderRadius: 8, fontSize: 14 }}
           />
           <button style={ugly ? { background: 'red', color: 'yellow', fontSize: 10 } : { background: '#4f46e5', color: '#fff', border: 0, borderRadius: 8, padding: '0 16px', minHeight: 40, fontWeight: 600 }}>
-            {ugly ? 'ADD!!' : 'Add'}
+            {ugly ? (ko ? '추가!!' : 'ADD!!') : ko ? '추가' : 'Add'}
           </button>
         </div>
         {tasks.map((task) => (
@@ -66,51 +69,52 @@ function TodoPreview({ open, fixed }: PreviewProps) {
             {!noDelete && <button style={ugly ? {} : { border: 0, background: 'transparent', color: '#9aa4b2', fontSize: 16 }}>✕</button>}
           </div>
         ))}
-        {noDelete && <div style={{ fontSize: 11, marginTop: 6, color: ugly ? '#000' : '#c00' }}>// TODO: implement delete lol</div>}
+        {noDelete && <div style={{ fontSize: 11, marginTop: 6, color: ugly ? '#000' : '#c00' }}>// TODO: {ko ? '삭제 기능 구현 ㅋㅋ' : 'implement delete lol'}</div>}
         {!noDelete && (
           <div style={{ fontSize: 12, marginTop: 10, color: '#6b7280', display: 'flex', justifyContent: 'space-between' }}>
-            <span>2 items left</span>
-            <span style={{ textDecoration: 'underline' }}>Clear completed</span>
+            <span>{ko ? '2개 남음' : '2 items left'}</span>
+            <span style={{ textDecoration: 'underline' }}>{ko ? '완료 항목 지우기' : 'Clear completed'}</span>
           </div>
         )}
-        {has(fixed, 'persist') && <div style={{ fontSize: 11, color: '#10b981', marginTop: 8 }}>✓ Saved locally</div>}
+        {has(fixed, 'persist') && <div style={{ fontSize: 11, color: '#10b981', marginTop: 8 }}>✓ {ko ? '로컬에 저장됨' : 'Saved locally'}</div>}
       </div>
-      <ConsoleStrip lines={[...(persist ? ['Tasks are not persisted: refresh = data loss'] : []), ...(mobile ? ['Layout overflows viewport (820px fixed width)'] : [])]} />
+      <ConsoleStrip lines={[...(persist ? [ko ? '할 일이 저장되지 않음: 새로고침 = 데이터 손실' : 'Tasks are not persisted: refresh = data loss'] : []), ...(mobile ? [ko ? '레이아웃이 화면을 넘침 (820px 고정 너비)' : 'Layout overflows viewport (820px fixed width)'] : [])]} />
     </div>
   )
 }
 
 /* ---------------- Cafe ---------------- */
-function CafePreview({ open, fixed }: PreviewProps) {
+function CafePreview({ open, fixed, lang }: PreviewProps) {
+  const ko = lang === 'ko'
   const flashy = has(open, 'flashy')
   const broken = has(open, 'images')
   const cta = has(open, 'cta')
   const contrast = has(open, 'contrast')
   const footer = has(fixed, 'footer')
   const menu = [
-    { name: 'Latte', price: '$4.5', emoji: '☕', img: 'latte.jpg' },
-    { name: 'Croissant', price: '$3.8', emoji: '🥐', img: 'croissant.jpg' },
+    { name: ko ? '라테' : 'Latte', price: ko ? '₩5,500' : '$4.5', emoji: '☕', img: 'latte.jpg' },
+    { name: ko ? '크루아상' : 'Croissant', price: ko ? '₩4,800' : '$3.8', emoji: '🥐', img: 'croissant.jpg' },
   ]
   return (
     <div style={{ fontFamily: flashy ? 'Impact, "Arial Black", sans-serif' : 'Georgia, "Times New Roman", serif', background: flashy ? 'repeating-linear-gradient(45deg,#ff0,#ff0 10px,#f0f 10px,#f0f 20px)' : '#faf6f0', minHeight: '100%', color: '#3b2a1f' }}>
       {flashy ? (
         <div style={{ padding: 10, textAlign: 'center' }}>
-          <div className="pv-marquee">☕☕ WELCOME TO BEAN THERE!!! BEST COFFEE IN THE UNIVERSE!!! ☕☕</div>
+          <div className="pv-marquee">{ko ? '☕☕ BEAN THERE에 오신 걸 환영합니다!!! 우주 최고의 커피!!! ☕☕' : '☕☕ WELCOME TO BEAN THERE!!! BEST COFFEE IN THE UNIVERSE!!! ☕☕'}</div>
           <h1 className="pv-rainbow" style={{ fontSize: 44, margin: '8px 0' }}>BEAN THERE</h1>
-          <div style={{ background: '#0f0', display: 'inline-block', padding: 4, transform: 'rotate(-4deg)' }}>🔥🔥 HOT HOT HOT 🔥🔥</div>
-          {!cta && <div><button className="pv-cta-flashy">ORDER NOW!!!</button></div>}
+          <div style={{ background: '#0f0', display: 'inline-block', padding: 4, transform: 'rotate(-4deg)' }}>🔥🔥 {ko ? '핫 핫 핫' : 'HOT HOT HOT'} 🔥🔥</div>
+          {!cta && <div><button className="pv-cta-flashy">{ko ? '지금 주문!!!' : 'ORDER NOW!!!'}</button></div>}
         </div>
       ) : (
         <div style={{ padding: '36px 24px', background: 'linear-gradient(rgba(59,42,31,.55),rgba(59,42,31,.55)), radial-gradient(circle at 30% 30%,#c08a5b,#5a3b28)', color: '#fff7ec', textAlign: 'center' }}>
           <div style={{ letterSpacing: 4, fontSize: 11, opacity: 0.8 }}>EST. 2019 · SEOUL</div>
           <h1 style={{ fontSize: 34, margin: '8px 0', fontWeight: 400 }}>Bean There</h1>
-          <p style={{ margin: 0, opacity: 0.85, fontStyle: 'italic' }}>Slow coffee for busy people.</p>
-          {!cta && <button style={{ marginTop: 16, background: '#e8b46a', color: '#3b2a1f', border: 0, borderRadius: 999, padding: '10px 22px', fontWeight: 700, fontFamily: 'system-ui' }}>Order Ahead</button>}
+          <p style={{ margin: 0, opacity: 0.85, fontStyle: 'italic' }}>{ko ? '바쁜 사람들을 위한 느린 커피.' : 'Slow coffee for busy people.'}</p>
+          {!cta && <button style={{ marginTop: 16, background: '#e8b46a', color: '#3b2a1f', border: 0, borderRadius: 999, padding: '10px 22px', fontWeight: 700, fontFamily: 'system-ui' }}>{ko ? '미리 주문' : 'Order Ahead'}</button>}
         </div>
       )}
       <div style={{ padding: 16 }}>
         <h2 style={{ margin: '0 0 10px', fontSize: flashy ? 26 : 18, color: contrast ? '#ffff66' : '#3b2a1f', background: flashy ? undefined : undefined }}>
-          {flashy ? 'MENU!!!' : 'Our Menu'}
+          {flashy ? (ko ? '메뉴!!!' : 'MENU!!!') : ko ? '메뉴' : 'Our Menu'}
         </h2>
         <div style={{ display: 'flex', gap: 12, background: contrast ? '#fff' : undefined, padding: contrast ? 8 : 0 }}>
           {menu.map((m) => (
@@ -129,11 +133,11 @@ function CafePreview({ open, fixed }: PreviewProps) {
             </div>
           ))}
         </div>
-        {cta && <div style={{ fontSize: 9, marginTop: 30, color: '#999' }}>to order ahead <u>click here</u></div>}
+        {cta && <div style={{ fontSize: 9, marginTop: 30, color: '#999' }}>{ko ? '미리 주문하려면 ' : 'to order ahead '}<u>{ko ? '여기를 클릭' : 'click here'}</u></div>}
       </div>
       {footer && (
         <div style={{ borderTop: '1px solid #eadfce', padding: '10px 16px', fontSize: 12, display: 'flex', justifyContent: 'space-between', color: '#6b5444', fontFamily: 'system-ui' }}>
-          <span>Open daily 8am–8pm</span>
+          <span>{ko ? '매일 오전 8시–오후 8시' : 'Open daily 8am–8pm'}</span>
           <span>📷 @beanthere</span>
         </div>
       )}
@@ -143,24 +147,25 @@ function CafePreview({ open, fixed }: PreviewProps) {
 }
 
 /* ---------------- Weather ---------------- */
-function WeatherPreview({ open }: PreviewProps) {
+function WeatherPreview({ open, lang }: PreviewProps) {
+  const ko = lang === 'ko'
   const raw = has(open, 'raw')
   const kelvin = has(open, 'kelvin')
   const loading = has(open, 'loading')
   const small = has(open, 'tvsize')
   const days = [
-    { d: 'Mon', k: 285.15, i: '☀️' },
-    { d: 'Tue', k: 283.15, i: '⛅' },
-    { d: 'Wed', k: 280.15, i: '🌧' },
-    { d: 'Thu', k: 282.15, i: '⛅' },
-    { d: 'Fri', k: 286.15, i: '☀️' },
+    { d: ko ? '월' : 'Mon', k: 285.15, i: '☀️' },
+    { d: ko ? '화' : 'Tue', k: 283.15, i: '⛅' },
+    { d: ko ? '수' : 'Wed', k: 280.15, i: '🌧' },
+    { d: ko ? '목' : 'Thu', k: 282.15, i: '⛅' },
+    { d: ko ? '금' : 'Fri', k: 286.15, i: '☀️' },
   ]
   const t = (k: number) => (kelvin ? `${k.toFixed(2)}K` : `${Math.round(k - 273.15)}°C`)
   if (raw) {
     return (
       <div style={{ fontFamily: 'Times New Roman, serif', padding: 8, background: '#fff', minHeight: '100%' }}>
-        <h3 style={{ margin: '0 0 4px' }}>Weather</h3>
-        {loading && <div>Temperature: undefined</div>}
+        <h3 style={{ margin: '0 0 4px' }}>{ko ? '날씨' : 'Weather'}</h3>
+        {loading && <div>{ko ? '기온' : 'Temperature'}: undefined</div>}
         <pre style={{ fontSize: 10, margin: 0, whiteSpace: 'pre-wrap' }}>
           {JSON.stringify({ city: 'Seoul', current: { temp: kelvin ? 285.15 : 12, wind: 3.4, code: 1 }, daily: days.map((d) => ({ day: d.d, temp: kelvin ? d.k : Math.round(d.k - 273.15) })) }, null, 1)}
         </pre>
@@ -170,7 +175,7 @@ function WeatherPreview({ open }: PreviewProps) {
   const scale = small ? 0.6 : 1
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', background: small ? '#dfe6ee' : 'linear-gradient(160deg,#0f172a,#1e3a8a)', color: small ? '#334' : '#fff', minHeight: '100%', padding: 16 * scale }}>
-      <div style={{ fontSize: 14 * scale, opacity: 0.8 }}>Seoul · Now</div>
+      <div style={{ fontSize: 14 * scale, opacity: 0.8 }}>{ko ? '서울 · 현재' : 'Seoul · Now'}</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <span style={{ fontSize: 64 * scale }}>☀️</span>
         <span style={{ fontSize: (small ? 40 : 84) * scale, fontWeight: 700 }}>{loading ? 'undefined' : t(285.15)}</span>
@@ -184,7 +189,7 @@ function WeatherPreview({ open }: PreviewProps) {
           </div>
         ))}
       </div>
-      {!small && <div style={{ fontSize: 11, opacity: 0.6, marginTop: 10 }}>Auto-refresh every 10 min</div>}
+      {!small && <div style={{ fontSize: 11, opacity: 0.6, marginTop: 10 }}>{ko ? '10분마다 자동 새로고침' : 'Auto-refresh every 10 min'}</div>}
     </div>
   )
 }

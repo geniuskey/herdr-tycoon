@@ -1,6 +1,6 @@
 # Herdr Tycoon 🐑
 
-A tiny "keep every agent busy" simulator. Run several coding agents in a fake Windows 98
+A tiny "keep every agent busy" simulator. Run several coding agents in a fake Windows 11
 desktop, check their results in the Browser / Explorer / Mail, and pick the next prompt
 with your mouse or arrow keys. No typing.
 
@@ -24,6 +24,14 @@ npm run dev
 
 `←→` switch agent · `↑↓` choose option · `Enter` / `1-4` send · `N` jump to next waiting agent ·
 `B` browser · `E` explorer · `M` mail · `Tab` cycle windows
+
+## Languages
+
+English and 한국어. The default follows the browser language. Switch on the title screen or with the
+`EN`/`한` button in the taskbar tray; the choice is saved in localStorage and applies instantly, even mid-stage.
+
+- `src/i18n/ui.ts`: UI strings (`en` is the source; `ko` must match its shape, enforced by TypeScript)
+- Scenario text is written inline as `l('English', '한국어')` pairs
 
 ## Content
 

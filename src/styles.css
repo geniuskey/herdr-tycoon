@@ -1,6 +1,6 @@
 :root {
-  --ui: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
-  --mono: 'IBM Plex Mono', 'Cascadia Mono', 'SF Mono', Menlo, Consolas, monospace;
+  --ui: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', 'Apple SD Gothic Neo', 'Malgun Gothic', 'IBM Plex Sans KR', sans-serif;
+  --mono: 'IBM Plex Mono', 'Cascadia Mono', 'SF Mono', Menlo, Consolas, 'IBM Plex Sans KR', 'D2Coding', monospace;
 
   /* Windows 11 light */
   --mica: #f3f3f3;
@@ -1101,6 +1101,37 @@ button.accent:hover {
   border: 0;
   background: transparent;
   padding: 4px 6px;
+}
+.tray-lang {
+  min-width: 28px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+}
+.tray-lang:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* ---------- language switch (title dialog) ---------- */
+.lang-switch {
+  margin-left: auto;
+  align-self: flex-start;
+  display: inline-flex;
+  border: 1px solid var(--stroke);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.lang-switch button {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 4px 10px;
+  font-size: 12px;
+  min-height: 0;
+}
+.lang-switch button.active {
+  background: var(--accent);
+  color: #fff;
 }
 
 /* ---------- toast ---------- */

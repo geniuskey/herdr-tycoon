@@ -1,3 +1,5 @@
+import type { L, Text } from '../i18n'
+
 export type AgentStatus = 'idle' | 'working' | 'blocked' | 'done'
 
 /** Where the player must look to "see" an issue and unlock the sharp prompt. */
@@ -13,14 +15,14 @@ export interface FileNode {
 export interface Issue {
   id: string
   /** Short label used in the result screen. */
-  title: string
+  title: L
   visibleIn: InspectSource
   /** Sharp, specific prompt. Unlocked after inspecting `visibleIn`. */
-  great: string
+  great: L
   /** Generic but reasonable prompt. */
-  ok: string
+  ok: L
   /** Agent reply when the fix lands. */
-  fixedReply: string
+  fixedReply: L
   /** Files touched when fixed. */
   files?: FileNode[]
 }
@@ -29,21 +31,21 @@ export interface ProjectScenario {
   id: string
   name: string // folder name, e.g. "todo-app"
   branch: string
-  title: string // human name
+  title: L // human name
   port: number
-  brief: { from: string; subject: string; body: string }
-  buildChoices: { label: string; tier: Tier; seconds: number; reply: string }[]
+  brief: { from: L; subject: L; body: L }
+  buildChoices: { label: L; tier: Tier; seconds: number; reply: L }[]
   /** Files that exist after the first build. */
   baseFiles: FileNode[]
   /** Issues present after the build, in the order the agent "notices" them. */
   issues: Issue[]
   /** Issues injected later by a client mail. */
-  lateMails?: { at: number; from: string; subject: string; body: string; issue: Issue }[]
+  lateMails?: { at: number; from: L; subject: L; body: L; issue: Issue }[]
 }
 
 export interface Choice {
   id: string
-  label: string
+  label: L
   tier: Tier
   issueId?: string
   lock?: InspectSource
@@ -53,9 +55,9 @@ export interface Choice {
 
 export interface BlockedEvent {
   kind: 'edit' | 'bash' | 'danger' | 'question' | 'context'
-  title: string
-  detail: string
-  options: { label: string; effect: BlockEffect }[]
+  title: L
+  detail: Text
+  options: { label: Text; effect: BlockEffect }[]
 }
 
 export type BlockEffect =
@@ -70,7 +72,7 @@ export type BlockEffect =
 
 export interface LogLine {
   who: 'you' | 'agent' | 'sys' | 'tool'
-  text: string
+  text: Text
 }
 
 export interface Agent {
@@ -99,9 +101,9 @@ export interface Agent {
 
 export interface Mail {
   id: string
-  from: string
-  subject: string
-  body: string
+  from: L
+  subject: L
+  body: L
   read: boolean
   at: number
   projectId: string
@@ -110,11 +112,11 @@ export interface Mail {
 
 export interface StageDef {
   id: number
-  name: string
-  subtitle: string
+  name: L
+  subtitle: L
   projects: string[]
   seconds: number
   blockChance: number
   tutorial?: boolean
-  lessons: string[]
+  lessons: L[]
 }

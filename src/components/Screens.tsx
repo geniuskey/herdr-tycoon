@@ -1,6 +1,8 @@
 import { allIssues, rankFor, RANKS, useGame } from '../game/store'
 import { PROJECTS, STAGES } from '../scenarios'
 import { PREVIEWS } from '../previews'
+import { LangSwitch } from './Shell'
+import { useT } from '../i18n'
 
 function Stars({ n }: { n: number }) {
   return (
@@ -30,44 +32,46 @@ export function TitleScreen() {
   const openStage = useGame((s) => s.openStage)
   const rank = rankFor(progress.xp)
   const nextRank = RANKS.find((r) => r.xp > progress.xp)
+  const { d, tx } = useT()
 
   return (
-    <Dialog title="Welcome" width={560}>
+    <Dialog title={d.welcome} width={560}>
       <div className="title-hero">
         <div className="logo">🐑</div>
         <div>
           <h2 style={{ margin: 0 }}>Herdr Tycoon</h2>
-          <div className="muted">Keep every agent busy. Never let a pane go idle.</div>
+          <div className="muted">{d.tagline}</div>
         </div>
+        <LangSwitch />
       </div>
       <fieldset>
-        <legend>Your career</legend>
+        <legend>{d.career}</legend>
         <div>
-          Rank: <b>{rank.title}</b> · {progress.xp} XP
-          {nextRank && <span className="muted"> (next: {nextRank.title} at {nextRank.xp})</span>}
+          {d.rank}: <b>{tx(rank.title)}</b> · {progress.xp} XP
+          {nextRank && <span className="muted">{d.nextRank(tx(nextRank.title), nextRank.xp)}</span>}
         </div>
       </fieldset>
       <fieldset>
-        <legend>Stages</legend>
+        <legend>{d.stages}</legend>
         {STAGES.map((st, i) => {
           const locked = i > 0 && !(progress.stars[i - 1] >= 1) && progress.stars[i] === undefined
           return (
             <div key={st.id} className="stage-row">
               <div>
                 <b>
-                  {i}. {st.name}
+                  {i}. {tx(st.name)}
                 </b>
-                <div className="small muted">{st.subtitle}</div>
+                <div className="small muted">{tx(st.subtitle)}</div>
               </div>
               <Stars n={progress.stars[i] ?? 0} />
               <button className="accent" disabled={locked} onClick={() => openStage(i)}>
-                {locked ? '🔒' : 'Play'}
+                {locked ? '🔒' : d.play}
               </button>
             </div>
           )
         })}
         <div className="small muted" style={{ marginTop: 6 }}>
-          Get ★ on a stage to unlock the next one. More stages coming soon.
+          {d.unlockHint}
         </div>
       </fieldset>
     </Dialog>
@@ -78,27 +82,30 @@ export function IntroScreen() {
   const stageIndex = useGame((s) => s.stageIndex)
   const beginPlay = useGame((s) => s.beginPlay)
   const st = STAGES[stageIndex]
+  const { d, tx } = useT()
   return (
-    <Dialog title={`Stage ${stageIndex}: ${st.name}`}>
+    <Dialog title={d.stageTitle(stageIndex, tx(st.name))}>
       <p>
-        <b>{st.subtitle}</b> · {Math.round(st.seconds / 60)} min
+        <b>{tx(st.subtitle)}</b> · {d.minutes(Math.round(st.seconds / 60))}
       </p>
-      <p>Projects: {st.projects.map((p) => PROJECTS[p].title).join(', ')}</p>
+      <p>
+        {d.projectsLabel}: {st.projects.map((p) => tx(PROJECTS[p].title)).join(', ')}
+      </p>
       <fieldset>
-        <legend>Tips</legend>
+        <legend>{d.tips}</legend>
         <ul className="tips">
           {st.lessons.map((l) => (
-            <li key={l}>{l}</li>
+            <li key={l.en}>{tx(l)}</li>
           ))}
         </ul>
       </fieldset>
       <fieldset>
-        <legend>Stars</legend>
-        <div className="small">★ utilization ≥ 50% · ★ quality ≥ 60% · ★ utilization ≥ 70%</div>
+        <legend>{d.stars}</legend>
+        <div className="small">{d.starRules}</div>
       </fieldset>
       <div style={{ textAlign: 'right', marginTop: 10 }}>
         <button className="accent" autoFocus onClick={beginPlay}>
-          Start ▶
+          {d.startBtn}
         </button>
       </div>
     </Dialog>
@@ -113,53 +120,57 @@ export function ResultScreen() {
   const goTitle = useGame((s) => s.goTitle)
   const progress = useGame((s) => s.progress)
   const hasNext = stageIndex + 1 < STAGES.length
+  const { d, tx, lang } = useT()
 
   const verdict =
-    r.utilization >= 0.7 ? 'Your agents never stopped. True herdr shepherd!' : r.utilization >= 0.5 ? 'Solid shift. A few agents took naps.' : 'Your agents spent a lot of time waiting for you.'
+    r.utilization >= 0.7 ? d.verdictGreat : r.utilization >= 0.5 ? d.verdictOk : d.verdictBad
 
   return (
-    <Dialog title={`Stage ${stageIndex} complete: ${STAGES[stageIndex].name}`} width={760}>
+    <Dialog title={d.stageComplete(stageIndex, tx(STAGES[stageIndex].name))} width={760}>
       <div className="result-top">
         <Stars n={r.stars} />
         <div>{verdict}</div>
       </div>
       <div className="result-stats">
         <div>
-          <div className="big">{Math.round(r.utilization * 100)}%</div>utilization
+          <div className="big">{Math.round(r.utilization * 100)}%</div>
+          {d.utilization}
         </div>
         <div>
-          <div className="big">{Math.round(r.quality * 100)}%</div>quality
+          <div className="big">{Math.round(r.quality * 100)}%</div>
+          {d.quality}
         </div>
         <div>
-          <div className="big">{r.caught}</div>threats caught
+          <div className="big">{r.caught}</div>
+          {d.threatsCaught}
         </div>
         <div>
-          <div className="big">+{r.xp}</div>XP · {rankFor(progress.xp).title}
+          <div className="big">+{r.xp}</div>XP · {tx(rankFor(progress.xp).title)}
         </div>
       </div>
       <fieldset>
-        <legend>Before → After</legend>
+        <legend>{d.beforeAfter}</legend>
         <div className="ba-grid">
           {agents.map((a) => {
             const base = PROJECTS[a.projectId].issues.map((i) => i.id)
             const P = PREVIEWS[a.projectId]
-            const fixedTitles = a.fixed.filter((f) => f !== 'regression').map((f) => allIssues(a.projectId).find((i) => i.id === f)!.title)
+            const fixedTitles = a.fixed.filter((f) => f !== 'regression').map((f) => tx(allIssues(a.projectId).find((i) => i.id === f)!.title))
             return (
               <div key={a.id} className="ba-row">
-                <div className="ba-name">{PROJECTS[a.projectId].title}</div>
+                <div className="ba-name">{tx(PROJECTS[a.projectId].title)}</div>
                 <div className="ba-thumb">
-                  <div className="ba-inner">{P({ open: base, fixed: [], polish: 0 })}</div>
+                  <div className="ba-inner">{P({ open: base, fixed: [], polish: 0, lang })}</div>
                 </div>
                 <div className="ba-arrow">→</div>
                 <div className="ba-thumb">
-                  {a.built ? <div className="ba-inner">{P({ open: a.open, fixed: a.fixed, polish: a.polish })}</div> : <div className="no-site small">never built</div>}
+                  {a.built ? <div className="ba-inner">{P({ open: a.open, fixed: a.fixed, polish: a.polish, lang })}</div> : <div className="no-site small">{d.neverBuilt}</div>}
                 </div>
                 <div className="ba-list small">
                   {fixedTitles.map((t) => (
                     <div key={t}>✔ {t}</div>
                   ))}
-                  {a.open.includes('regression') && <div className="bad">✘ Shipped with a crash</div>}
-                  {a.polish > 0 && <div>✨ {a.polish} polish task(s)</div>}
+                  {a.open.includes('regression') && <div className="bad">{d.shippedCrash}</div>}
+                  {a.polish > 0 && <div>{d.polishTasks(a.polish)}</div>}
                 </div>
               </div>
             )
@@ -167,11 +178,11 @@ export function ResultScreen() {
         </div>
       </fieldset>
       <div className="result-buttons">
-        <button onClick={goTitle}>Stage select</button>
-        <button onClick={() => openStage(stageIndex)}>Retry</button>
+        <button onClick={goTitle}>{d.stageSelectBtn}</button>
+        <button onClick={() => openStage(stageIndex)}>{d.retry}</button>
         {hasNext && (
           <button className="accent" autoFocus disabled={r.stars < 1 && !(progress.stars[stageIndex] >= 1)} onClick={() => openStage(stageIndex + 1)}>
-            Next stage ▶
+            {d.nextStage}
           </button>
         )}
       </div>

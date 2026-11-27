@@ -4,6 +4,7 @@ import { PROJECTS, STAGES } from '../scenarios'
 import type { Agent, AgentStatus } from '../game/types'
 import { Window } from './Window'
 import { Herdy } from './Shell'
+import { useT } from '../i18n'
 
 const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
 const VERBS = ['Zigzagging', 'Herding', 'Percolating', 'Noodling', 'Clauding', 'Tinkering', 'Brewing', 'Wrangling', 'Pondering', 'Shepherding']
@@ -30,8 +31,6 @@ function AgentGlyph({ status }: { status: AgentStatus }) {
   return <span className="g g-idle">○</span>
 }
 
-const LOCK_TEXT = { browser: 'Browser (B)', explorer: 'Explorer (E)', mail: 'Mail (M)' }
-
 function ctxBar(ctx: number) {
   const filled = Math.min(5, Math.round(ctx / 20))
   return '▰'.repeat(filled) + '▱'.repeat(5 - filled)
@@ -39,12 +38,13 @@ function ctxBar(ctx: number) {
 
 /** Fake "npm run dev" pane: derived from agent state. */
 function DevServerPane({ agent }: { agent: Agent }) {
+  const { d } = useT()
   const p = PROJECTS[agent.projectId]
   const lines: { t: string; c?: string }[] = []
   if (!agent.built) {
     lines.push({ t: `~/projects/${p.name} $ npm run dev`, c: 'dim' })
     lines.push({ t: 'npm error Missing script: "dev"', c: 'red' })
-    lines.push({ t: '(waiting for the agent to scaffold the project…)', c: 'dim' })
+    lines.push({ t: d.waitingScaffold, c: 'dim' })
   } else {
     lines.push({ t: `> ${p.name}@0.1.0 dev`, c: 'dim' })
     lines.push({ t: `  VITE v7.3.8  ready in 312 ms`, c: 'green' })
@@ -72,6 +72,7 @@ function ClaudePane({ agent }: { agent: Agent }) {
   const mails = useGame((s) => s.mails)
   const send = useGame((s) => s.send)
   const setCursor = useGame((s) => s.setCursor)
+  const { d, tx } = useT()
   const logRef = useRef<HTMLDivElement>(null)
   const p = PROJECTS[agent.projectId]
   const verb = VERBS[(agent.log.length + agent.projectId.length) % VERBS.length]
@@ -97,7 +98,7 @@ function ClaudePane({ agent }: { agent: Agent }) {
           <div className="cc-banner-body">
             <div className="cc-mascot">▐▛███▜▌</div>
             <div>
-              <b>Welcome back!</b>
+              <b>{d.welcomeBack}</b>
               <div className="dim">~/projects/{p.name}</div>
             </div>
           </div>
@@ -106,11 +107,11 @@ function ClaudePane({ agent }: { agent: Agent }) {
           if (l.who === 'you')
             return (
               <div key={i} className="cc-user">
-                <span className="dim">❯</span> {l.text}
+                <span className="dim">❯</span> {tx(l.text)}
               </div>
             )
           if (l.who === 'tool') {
-            const [head, sub] = l.text.split('\n')
+            const [head, sub] = tx(l.text).split('\n')
             const m = head.match(/^(\w+)\((.*)\)$/)
             return (
               <div key={i} className="cc-tool">
@@ -123,12 +124,12 @@ function ClaudePane({ agent }: { agent: Agent }) {
           if (l.who === 'agent')
             return (
               <div key={i} className="cc-agent">
-                <span className="cc-bullet">⏺</span> {l.text}
+                <span className="cc-bullet">⏺</span> {tx(l.text)}
               </div>
             )
           return (
             <div key={i} className="cc-sys dim">
-              {l.text}
+              {tx(l.text)}
             </div>
           )
         })}
@@ -143,21 +144,21 @@ function ClaudePane({ agent }: { agent: Agent }) {
         })}
         {agent.status === 'working' && (
           <div className="cc-working">
-            ✻ {verb}… <span className="dim">({Math.round(agent.progress * agent.seconds)}s · esc to interrupt)</span>
+            ✻ {verb}… <span className="dim">{d.escToInterrupt(Math.round(agent.progress * agent.seconds))}</span>
           </div>
         )}
       </div>
 
       {agent.status === 'blocked' && agent.blocked && (
         <div className={`cc-dialog ${agent.blocked.kind === 'danger' ? 'danger' : ''}`}>
-          <div className="cc-dialog-title">{agent.blocked.title}</div>
-          <div className="cc-dialog-detail">{agent.blocked.detail}</div>
-          <div className="cc-dialog-q">{agent.blocked.kind === 'question' ? 'Choose an answer:' : 'Do you want to proceed?'}</div>
+          <div className="cc-dialog-title">{tx(agent.blocked.title)}</div>
+          <div className="cc-dialog-detail">{tx(agent.blocked.detail)}</div>
+          <div className="cc-dialog-q">{agent.blocked.kind === 'question' ? d.chooseAnswer : d.proceed}</div>
           {agent.blocked.options.map((o, i) => (
-            <div key={o.label} className={`cc-opt ${cursor === i ? 'sel' : ''}`} onMouseEnter={() => setCursor(i)} onClick={() => send(i)}>
+            <div key={i} className={`cc-opt ${cursor === i ? 'sel' : ''}`} onMouseEnter={() => setCursor(i)} onClick={() => send(i)}>
               <span className="cc-caret">{cursor === i ? '❯' : ' '}</span>
               <span className="cc-num">{i + 1}.</span>
-              <span>{o.label}</span>
+              <span>{tx(o.label)}</span>
             </div>
           ))}
         </div>
@@ -170,14 +171,14 @@ function ClaudePane({ agent }: { agent: Agent }) {
 
       {(agent.status === 'idle' || agent.status === 'done') && (
         <div className="cc-menu">
-          <div className="cc-menu-title dim">{agent.built ? 'Pick your next prompt (↑↓ ⏎)' : 'New task: pick your first prompt (↑↓ ⏎)'}</div>
+          <div className="cc-menu-title dim">{agent.built ? d.pickNext : d.pickFirst}</div>
           {agent.choices.map((c, i) => {
             const unlocked = isUnlocked({ mails }, agent, c)
             return (
               <div key={c.id} className={`cc-opt ${cursor === i ? 'sel' : ''} ${unlocked ? '' : 'locked'}`} onMouseEnter={() => setCursor(i)} onClick={() => send(i)}>
                 <span className="cc-caret">{cursor === i ? '❯' : ' '}</span>
                 <span className="cc-num">{i + 1}.</span>
-                <span>{unlocked ? c.label : `🔒 A sharper prompt is available. Check the ${LOCK_TEXT[c.lock!]} to see what's wrong.`}</span>
+                <span>{unlocked ? tx(c.label) : d.lockedChoice(d.place[c.lock!])}</span>
               </div>
             )
           })}
@@ -187,8 +188,8 @@ function ClaudePane({ agent }: { agent: Agent }) {
       <div className="cc-status">
         <span className="purple">~/p/{p.name}</span> <span className="dim">⎇</span> <span className="blue">{p.branch}</span>{' '}
         <span className={agent.ctx >= 85 ? 'red' : 'dim'}>{ctxBar(agent.ctx)}</span> <span className={agent.ctx >= 85 ? 'red' : 'cyan'}>{agent.ctx}%</span>
-        {agent.slow && <span className="red"> · slow (context full)</span>}
-        {agent.autoEdits && <span className="dim"> · ⏵⏵ accept edits on</span>}
+        {agent.slow && <span className="red">{d.slowCtx}</span>}
+        {agent.autoEdits && <span className="dim">{d.acceptEdits}</span>}
       </div>
     </div>
   )
@@ -199,6 +200,7 @@ export function Terminal() {
   const selected = useGame((s) => s.selected)
   const selectAgent = useGame((s) => s.selectAgent)
   const tutorial = useGame((s) => !!STAGES[s.stageIndex].tutorial)
+  const { d } = useT()
   const agent = agents[selected]
 
   return (
@@ -237,14 +239,14 @@ export function Terminal() {
                 <span className="ag-name">
                   claude <span className="dim">· {i + 1}</span>
                 </span>
-                <span className={`ag-state st-${a.status}`}>{a.status}</span>
+                <span className={`ag-state st-${a.status}`}>{d.status[a.status]}</span>
               </div>
             ))}
           </div>
           <div className="side-keys dim">
-            <div>←→ workspace · ↑↓ option</div>
-            <div>⏎/1-4 send · N next waiting</div>
-            <div>B browser · E files · M mail</div>
+            <div>{d.keysWorkspace}</div>
+            <div>{d.keysSend}</div>
+            <div>{d.keysApps}</div>
           </div>
         </div>
         {agent && (

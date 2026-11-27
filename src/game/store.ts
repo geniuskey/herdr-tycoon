@@ -3,6 +3,7 @@ import type { Agent, BlockEffect, Choice, FileNode, Issue, LogLine, Mail, StageD
 import { POLISH_PROMPTS, PROJECTS, REGRESSION, STAGES, TRAP_PROMPTS, VAGUE_PROMPTS } from '../scenarios'
 import { CONTEXT_EVENT, makeBlockedEvent } from '../scenarios/events'
 import { playSound } from './sound'
+import { join, ui, type L, type Text } from '../i18n'
 
 export type WindowId = 'terminal' | 'browser' | 'explorer' | 'mail'
 export type Screen = 'title' | 'intro' | 'playing' | 'result'
@@ -48,7 +49,7 @@ interface GameState {
   browserTab: string
   explorerProject: string
   caught: number
-  toast?: { text: string; until: number }
+  toast?: { text: Text; until: number }
   result?: StageResult
   progress: Progress
 
@@ -71,7 +72,7 @@ interface GameState {
   setBrowserTab: (projectId: string) => void
   setExplorerProject: (projectId: string) => void
   readMail: (id: string) => void
-  showToast: (text: string) => void
+  showToast: (text: Text) => void
 }
 
 const STORAGE_KEY = 'herdr-tycoon:v1'
@@ -94,13 +95,7 @@ function saveProgress(p: Progress) {
   }
 }
 
-export const RANKS = [
-  { xp: 0, title: 'Intern' },
-  { xp: 250, title: 'Vibe Coder' },
-  { xp: 600, title: 'Multitasker' },
-  { xp: 1000, title: 'Herdr Shepherd' },
-  { xp: 1500, title: 'Agent Orchestrator' },
-]
+export const RANKS: { xp: number; title: L }[] = [0, 250, 600, 1000, 1500].map((xp, i) => ({ xp, title: ui((d) => d.ranks[i]) }))
 
 export function rankFor(xp: number) {
   let r = RANKS[0]
@@ -174,14 +169,6 @@ const REMOVALS: Record<string, (p: string) => boolean> = {
   deadcode: (p) => p.includes('final_final'),
 }
 
-const TIER_NOTE: Record<string, string> = {
-  great: '⭐ Sharp prompt → fast and reliable.',
-  ok: '🙂 Generic prompt → slower, might miss.',
-  vague: '😵 Vague prompt → slow, mostly guesswork.',
-  trap: '💣 Shortcut → fast now, pain later.',
-  polish: '✨ Polish → extra quality points.',
-  overkill: '🐌 Overengineered → slow start for a simple job.',
-}
 
 /** Is a locked "great" choice visible to the player right now? */
 export function isUnlocked(state: Pick<GameState, 'mails'>, agent: Agent, choice: Choice) {
@@ -418,8 +405,8 @@ export const useGame = create<GameState>((set, get) => ({
     const c = a.choices[idx]
     if (!c) return
     if (!isUnlocked(s, a, c)) {
-      const where = c.lock === 'browser' ? 'Browser (B)' : c.lock === 'explorer' ? 'Explorer (E)' : 'Mail (M)'
-      get().showToast(`🔒 Check the ${where} first to write this sharper prompt.`)
+      const lock = c.lock!
+      get().showToast(ui((d) => d.lockedToast(d.place[lock])))
       return
     }
     const seconds = c.seconds * (a.slow ? 1.6 : 1)
@@ -442,7 +429,7 @@ export const useGame = create<GameState>((set, get) => ({
     if (!a || a.status !== 'blocked' || !a.blocked) return
     const opt = a.blocked.options[optionIndex]
     if (!opt) return
-    const agent: Agent = { ...a, blocked: undefined, status: 'working', log: [...a.log, { who: 'sys', text: `${a.blocked.detail} → ${opt.label}` }] }
+    const agent: Agent = { ...a, blocked: undefined, status: 'working', log: [...a.log, { who: 'sys', text: join((p) => `${p(a.blocked!.detail)} → ${p(opt.label)}`) }] }
     let caught = s.caught
     const effect: BlockEffect = opt.effect
     switch (effect) {
@@ -453,32 +440,32 @@ export const useGame = create<GameState>((set, get) => ({
         agent.status = 'done'
         agent.current = undefined
         agent.progress = 0
-        agent.log.push({ who: 'agent', text: "Okay, I stopped. I can't continue without that. What should I do instead?" })
+        agent.log.push({ who: 'agent', text: ui((d) => d.denyReply) })
         agent.choices = agent.built ? genChoices(agent) : buildChoices(agent.projectId)
         break
       case 'disaster':
         if (agent.built && !agent.open.includes('regression')) agent.open = ['regression', ...agent.open]
         agent.seconds += 6
-        agent.log.push({ who: 'agent', text: '💥 Uh-oh. That broke things. Recovering...' })
-        get().showToast('💥 Ouch. Always read commands before approving them.')
+        agent.log.push({ who: 'agent', text: ui((d) => d.disasterLog) })
+        get().showToast(ui((d) => d.disasterToast))
         break
       case 'caught':
         caught += 1
-        agent.log.push({ who: 'agent', text: 'Good call, that was dangerous. Continuing safely.' })
-        get().showToast('🛡 Nice catch! +bonus')
+        agent.log.push({ who: 'agent', text: ui((d) => d.caughtLog) })
+        get().showToast(ui((d) => d.caughtToast))
         break
       case 'overkill':
         agent.seconds += 8
-        agent.log.push({ who: 'agent', text: 'Setting up Postgres, Redis, Kafka... this will take a while.' })
+        agent.log.push({ who: 'agent', text: ui((d) => d.overkillLog) })
         break
       case 'slow':
         agent.slow = true
-        agent.log.push({ who: 'sys', text: 'Context nearly full: this agent is slower until compacted.' })
+        agent.log.push({ who: 'sys', text: ui((d) => d.slowLog) })
         break
       case 'compact':
         agent.slow = false
         agent.ctx = 5
-        agent.log.push({ who: 'sys', text: 'Conversation compacted. Fresh and fast.' })
+        agent.log.push({ who: 'sys', text: ui((d) => d.compactLog) })
         break
     }
     set({ agents: s.agents.map((x, i) => (i === s.selected ? agent : x)), caught, cursor: 0 })
@@ -543,7 +530,7 @@ function complete(agent: Agent, time: number, stageSeconds: number) {
   }
 
   if (c.build) {
-    const b = p.buildChoices.find((x) => x.label === c.label)!
+    const b = p.buildChoices.find((x) => x.label.en === c.label.en)!
     agent.built = true
     const arrived = (p.lateMails ?? []).filter((m) => m.at <= time && m.at < stageSeconds).map((m) => m.issue.id)
     agent.open = [...p.issues.map((i) => i.id), ...arrived]
@@ -558,23 +545,24 @@ function complete(agent: Agent, time: number, stageSeconds: number) {
     fix(c.issueId!)
   } else if (c.tier === 'ok') {
     if (Math.random() < 0.7 && agent.open.includes(c.issueId!)) fix(c.issueId!)
-    else log.push({ who: 'agent', text: "I tried, but I wasn't sure what exactly you wanted. Made a partial attempt." })
+    else log.push({ who: 'agent', text: ui((d) => d.okMiss) })
   } else if (c.tier === 'vague') {
     if (Math.random() < 0.35 && agent.open.length) fix(pick(agent.open))
-    else log.push({ who: 'agent', text: 'I changed some things. Hard to say if it is better. Could you be more specific?' })
+    else log.push({ who: 'agent', text: ui((d) => d.vagueMiss) })
   } else if (c.tier === 'trap') {
     if (agent.open.includes(c.issueId!)) fix(c.issueId!)
     if (!agent.open.includes('regression')) agent.open = ['regression', ...agent.open]
-    log.push({ who: 'agent', text: 'Done, super fast! (I skipped a few checks along the way...)' })
+    log.push({ who: 'agent', text: ui((d) => d.trapDone) })
   } else if (c.tier === 'polish') {
     agent.polish += 1
-    const path = c.label.startsWith('Write a README') ? 'README.md' : c.label.includes('CI') ? '.github/workflows/ci.yml' : undefined
+    const path = c.label.en.startsWith('Write a README') ? 'README.md' : c.label.en.includes('CI') ? '.github/workflows/ci.yml' : undefined
     agent.files = applyFiles(agent.files, path ? [{ path, mark: 'new' }] : [])
-    log.push({ who: 'agent', text: 'Done. The project is a little more polished now.' })
+    log.push({ who: 'agent', text: ui((d) => d.polishDone) })
   }
 
   agent.ctx = Math.min(99, agent.ctx + 9 + Math.floor(Math.random() * 6) + (c.tier === 'vague' ? 6 : 0))
-  log.push({ who: 'sys', text: TIER_NOTE[c.build && c.tier === 'trap' ? 'overkill' : c.tier] })
+  const note = c.build && c.tier === 'trap' ? 'overkill' : c.tier
+  log.push({ who: 'sys', text: ui((d) => d.tierNote[note]) })
   agent.log = log.slice(-40)
   agent.choices = genChoices(agent)
 }

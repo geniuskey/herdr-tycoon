@@ -3,6 +3,7 @@ import { useGame } from './game/store'
 import { Terminal } from './components/Terminal'
 import { Browser, Explorer, MailApp } from './components/Apps'
 import { Taskbar, Toast } from './components/Shell'
+import { useT } from './i18n'
 import { IntroScreen, ResultScreen, TitleScreen } from './components/Screens'
 
 function useGameLoop() {
@@ -75,13 +76,14 @@ export default function App() {
   useAutoResize()
   const screen = useGame((s) => s.screen)
   const hasStage = useGame((s) => s.agents.length > 0)
+  const { d } = useT()
 
   return (
     <div className="desktop">
       {screen === 'title' && (
         <div className="desktop-icons">
-          <div className="d-icon">🗑<span>Recycle Bin</span></div>
-          <div className="d-icon">💻<span>This PC</span></div>
+          <div className="d-icon">🗑<span>{d.recycleBin}</span></div>
+          <div className="d-icon">💻<span>{d.thisPC}</span></div>
         </div>
       )}
       {hasStage && screen !== 'title' && (
@@ -97,7 +99,7 @@ export default function App() {
       {screen === 'result' && <ResultScreen />}
       <Toast />
       <Taskbar />
-      <div className="small-screen">Herdr Tycoon needs a desktop-sized screen (at least 1024px wide).</div>
+      <div className="small-screen">{d.smallScreen}</div>
     </div>
   )
 }

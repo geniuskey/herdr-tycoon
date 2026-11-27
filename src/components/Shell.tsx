@@ -3,13 +3,38 @@ import { isUnlocked, useGame, type WindowId } from '../game/store'
 import { setMuted } from '../game/sound'
 import { STAGES } from '../scenarios'
 import { Dot } from './Terminal'
+import { LANGS, useLang, useT } from '../i18n'
 
-const APPS: { id: WindowId; icon: string; label: string }[] = [
-  { id: 'terminal', icon: '❯_', label: 'Terminal (herdr)' },
-  { id: 'browser', icon: '🌐', label: 'Browser' },
-  { id: 'explorer', icon: '📁', label: 'File Explorer' },
-  { id: 'mail', icon: '✉️', label: 'Mail' },
+const APPS: { id: WindowId; icon: string }[] = [
+  { id: 'terminal', icon: '❯_' },
+  { id: 'browser', icon: '🌐' },
+  { id: 'explorer', icon: '📁' },
+  { id: 'mail', icon: '✉️' },
 ]
+
+/** EN / 한국어 toggle. */
+export function LangSwitch({ compact }: { compact?: boolean }) {
+  const lang = useLang((s) => s.lang)
+  const setLang = useLang((s) => s.setLang)
+  const { d } = useT()
+  if (compact) {
+    const other = lang === 'en' ? 'ko' : 'en'
+    return (
+      <button className="tray-btn tray-lang" title={d.language} onClick={() => setLang(other)}>
+        {lang === 'en' ? 'EN' : '한'}
+      </button>
+    )
+  }
+  return (
+    <div className="lang-switch" role="group" aria-label={d.language}>
+      {LANGS.map((l) => (
+        <button key={l} className={l === lang ? 'active' : ''} onClick={() => setLang(l)}>
+          {l === 'en' ? 'EN' : '한국어'}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 export function useUtilization() {
   return useGame((s) => {
@@ -32,6 +57,7 @@ export function Taskbar() {
   const openStage = useGame((s) => s.openStage)
   const goTitle = useGame((s) => s.goTitle)
   const util = useUtilization()
+  const { d } = useT()
   const playing = screen !== 'title' && agents.length > 0
   const left = Math.max(0, STAGES[stageIndex].seconds - time)
   const mm = Math.floor(left / 60)
@@ -42,7 +68,7 @@ export function Taskbar() {
   return (
     <div className="taskbar">
       <div className="tb-center">
-        <button className={`tb-app tb-start ${menu ? 'active' : ''}`} onClick={() => setMenu(!menu)} title="Start">
+        <button className={`tb-app tb-start ${menu ? 'active' : ''}`} onClick={() => setMenu(!menu)} title={d.start}>
           <svg width="20" height="20" viewBox="0 0 20 20">
             <rect x="1" y="1" width="8.5" height="8.5" rx="1" fill="#0078d4" />
             <rect x="10.5" y="1" width="8.5" height="8.5" rx="1" fill="#0078d4" />
@@ -54,7 +80,7 @@ export function Taskbar() {
           APPS.map((a) => {
             const w = windows.find((x) => x.id === a.id)!
             return (
-              <button key={a.id} className={`tb-app ${focused === a.id && !w.minimized ? 'active' : ''} ${w.minimized ? '' : 'open'}`} onClick={() => focus(a.id)} title={a.label}>
+              <button key={a.id} className={`tb-app ${focused === a.id && !w.minimized ? 'active' : ''} ${w.minimized ? '' : 'open'}`} onClick={() => focus(a.id)} title={d.apps[a.id]}>
                 <span className={a.id === 'terminal' ? 'tb-term' : ''}>{a.icon}</span>
                 {a.id === 'mail' && unread > 0 && <span className="tb-badge">{unread}</span>}
               </button>
@@ -66,33 +92,34 @@ export function Taskbar() {
           <div className="start-h">Herdr Tycoon</div>
           {playing && (
             <div className="start-item" onClick={() => (setMenu(false), openStage(stageIndex))}>
-              🔄 Restart stage
+              {d.restartStage}
             </div>
           )}
           <div className="start-item" onClick={() => (setMenu(false), goTitle())}>
-            🏠 Stage select
+            {d.stageSelect}
           </div>
         </div>
       )}
       <div className="tray">
         {playing && (
           <>
-            <span className="tray-dots" title="Agent status">
+            <span className="tray-dots" title={d.agentStatus}>
               {agents.map((a) => (
                 <Dot key={a.id} status={a.status} />
               ))}
             </span>
-            <span title="Utilization: share of agent time spent working" className={`util ${util >= 0.7 ? 'good' : util >= 0.5 ? 'ok' : 'bad'}`}>
-              {Math.round(util * 100)}% busy
+            <span title={d.utilTitle} className={`util ${util >= 0.7 ? 'good' : util >= 0.5 ? 'ok' : 'bad'}`}>
+              {d.busy(Math.round(util * 100))}
             </span>
             <span className={`tray-time ${left < 20 ? 'urgent' : ''}`}>
               {mm}:{ss}
             </span>
           </>
         )}
+        <LangSwitch compact />
         <button
           className="tray-btn"
-          title={muted ? 'Unmute' : 'Mute'}
+          title={muted ? d.unmute : d.mute}
           onClick={() => {
             setMuted(!muted)
             setMutedState(!muted)
@@ -107,6 +134,7 @@ export function Taskbar() {
 
 export function Toast() {
   const toast = useGame((s) => s.toast)
+  const { tx } = useT()
   const [, force] = useState(0)
   useEffect(() => {
     if (!toast) return
@@ -114,31 +142,32 @@ export function Toast() {
     return () => clearTimeout(t)
   }, [toast])
   if (!toast || performance.now() > toast.until) return null
-  return <div className="toast">{toast.text}</div>
+  return <div className="toast">{tx(toast.text)}</div>
 }
 
 /** Tutorial helper, rendered inside the herdr sidebar. */
 export function Herdy() {
   const s = useGame()
+  const { d } = useT()
   const a = s.agents[0]
   if (!a) return null
   const briefRead = s.mails.some((m) => m.read)
   let text: string
   if (!a.built && a.status === 'idle') {
-    text = 'Your agent is idle (○). Idle agents are wasted time! Pick a prompt with ↑↓ and press Enter, or just click one.'
+    text = d.herdyIdle
   } else if (a.status === 'working' && !briefRead) {
-    text = 'Spinner = working. That is what you want! While it works, read the client mail (M). It has useful hints.'
+    text = d.herdyWorking
   } else if (a.status === 'blocked') {
-    text = 'Red = the agent needs you. Read what it is asking before you approve!'
+    text = d.herdyBlocked
   } else if (a.status === 'done') {
     const locked = a.choices.find((c) => c.lock && !isUnlocked(s, a, c))
     if (locked) {
-      text = `Green = done. Don't continue blind: check the ${locked.lock === 'browser' ? 'Browser (B)' : locked.lock === 'explorer' ? 'Explorer (E)' : 'Mail (M)'} to see the result. A sharper prompt unlocks!`
+      text = d.herdyLocked(d.place[locked.lock!])
     } else {
-      text = 'Now you know what is wrong. Specific prompts are faster and more reliable. Send one quickly to get back to working!'
+      text = d.herdyUnlocked
     }
   } else {
-    text = 'Keep it working! "busy %" in the taskbar is your utilization. Press N to jump to whichever agent needs you.'
+    text = d.herdyDefault
   }
   return (
     <div className="herdy">
