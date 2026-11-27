@@ -38,6 +38,7 @@ export const PROJECTS: Record<string, ProjectScenario> = {
   todo: {
     id: 'todo',
     name: 'todo-app',
+    branch: 'main',
     title: 'Todo App',
     port: 3001,
     brief: {
@@ -127,6 +128,7 @@ export const PROJECTS: Record<string, ProjectScenario> = {
   cafe: {
     id: 'cafe',
     name: 'cafe-landing',
+    branch: 'feat/landing',
     title: 'Cafe Landing Page',
     port: 3002,
     brief: {
@@ -236,6 +238,7 @@ export const PROJECTS: Record<string, ProjectScenario> = {
   weather: {
     id: 'weather',
     name: 'weather-dash',
+    branch: 'dashboard-v1',
     title: 'Weather Dashboard',
     port: 3003,
     brief: {

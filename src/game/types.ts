@@ -28,6 +28,7 @@ export interface Issue {
 export interface ProjectScenario {
   id: string
   name: string // folder name, e.g. "todo-app"
+  branch: string
   title: string // human name
   port: number
   brief: { from: string; subject: string; body: string }
@@ -68,7 +69,7 @@ export type BlockEffect =
   | 'compact' // continue and clear slow
 
 export interface LogLine {
-  who: 'you' | 'agent' | 'sys'
+  who: 'you' | 'agent' | 'sys' | 'tool'
   text: string
 }
 
@@ -89,6 +90,7 @@ export interface Agent {
   inspected: Record<InspectSource, boolean>
   autoEdits: boolean
   slow: boolean
+  ctx: number // context window usage %
   log: LogLine[]
   files: FileNode[]
   workingTime: number

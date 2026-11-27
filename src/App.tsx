@@ -20,6 +20,21 @@ function useGameLoop() {
   }, [])
 }
 
+function useAutoResize() {
+  useEffect(() => {
+    let raf = 0
+    const onResize = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => useGame.getState().fitToViewport())
+    }
+    window.addEventListener('resize', onResize)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      cancelAnimationFrame(raf)
+    }
+  }, [])
+}
+
 function useKeyboard() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -57,15 +72,18 @@ function useKeyboard() {
 export default function App() {
   useGameLoop()
   useKeyboard()
+  useAutoResize()
   const screen = useGame((s) => s.screen)
   const hasStage = useGame((s) => s.agents.length > 0)
 
   return (
     <div className="desktop">
-      <div className="desktop-icons">
-        <div className="d-icon">🗑<span>Recycle Bin</span></div>
-        <div className="d-icon">💾<span>My Computer</span></div>
-      </div>
+      {screen === 'title' && (
+        <div className="desktop-icons">
+          <div className="d-icon">🗑<span>Recycle Bin</span></div>
+          <div className="d-icon">💻<span>This PC</span></div>
+        </div>
+      )}
       {hasStage && screen !== 'title' && (
         <>
           <Terminal />

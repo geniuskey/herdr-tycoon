@@ -17,11 +17,9 @@ function Stars({ n }: { n: number }) {
 function Dialog({ title, children, width = 520 }: { title: string; children: React.ReactNode; width?: number }) {
   return (
     <div className="modal-backdrop">
-      <div className="window dialog" style={{ width }}>
-        <div className="title-bar">
-          <div className="title-bar-text">{title}</div>
-        </div>
-        <div className="window-body">{children}</div>
+      <div className="dialog" style={{ width }}>
+        <div className="dialog-title">{title}</div>
+        <div className="dialog-body">{children}</div>
       </div>
     </div>
   )
@@ -34,7 +32,7 @@ export function TitleScreen() {
   const nextRank = RANKS.find((r) => r.xp > progress.xp)
 
   return (
-    <Dialog title="Welcome to HerdrOS 98" width={560}>
+    <Dialog title="Welcome" width={560}>
       <div className="title-hero">
         <div className="logo">🐑</div>
         <div>
@@ -62,7 +60,7 @@ export function TitleScreen() {
                 <div className="small muted">{st.subtitle}</div>
               </div>
               <Stars n={progress.stars[i] ?? 0} />
-              <button disabled={locked} onClick={() => openStage(i)}>
+              <button className="accent" disabled={locked} onClick={() => openStage(i)}>
                 {locked ? '🔒' : 'Play'}
               </button>
             </div>
@@ -99,7 +97,7 @@ export function IntroScreen() {
         <div className="small">★ utilization ≥ 50% · ★ quality ≥ 60% · ★ utilization ≥ 70%</div>
       </fieldset>
       <div style={{ textAlign: 'right', marginTop: 10 }}>
-        <button autoFocus onClick={beginPlay}>
+        <button className="accent" autoFocus onClick={beginPlay}>
           Start ▶
         </button>
       </div>
@@ -172,7 +170,7 @@ export function ResultScreen() {
         <button onClick={goTitle}>Stage select</button>
         <button onClick={() => openStage(stageIndex)}>Retry</button>
         {hasNext && (
-          <button autoFocus disabled={r.stars < 1 && !(progress.stars[stageIndex] >= 1)} onClick={() => openStage(stageIndex + 1)}>
+          <button className="accent" autoFocus disabled={r.stars < 1 && !(progress.stars[stageIndex] >= 1)} onClick={() => openStage(stageIndex + 1)}>
             Next stage ▶
           </button>
         )}

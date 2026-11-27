@@ -1,6 +1,16 @@
 import type { BlockedEvent } from '../game/types'
 
-export function makeBlockedEvent(projectName: string, autoEdits: boolean, slow: boolean, rand: () => number): BlockedEvent {
+export const CONTEXT_EVENT: BlockedEvent = {
+  kind: 'context',
+  title: 'Context window almost full',
+  detail: 'Context left until auto-compact: 8%. Responses will get slower and less accurate. Compact the conversation now?',
+  options: [
+    { label: '/compact', effect: 'compact' },
+    { label: 'Keep going', effect: 'slow' },
+  ],
+}
+
+export function makeBlockedEvent(projectName: string, autoEdits: boolean, rand: () => number): BlockedEvent {
   const pool: BlockedEvent[] = []
 
   if (!autoEdits) {
@@ -76,18 +86,6 @@ export function makeBlockedEvent(projectName: string, autoEdits: boolean, slow: 
       ],
     },
   )
-
-  if (!slow) {
-    pool.push({
-      kind: 'context',
-      title: 'Context window 92% full',
-      detail: 'Responses will get slower and less accurate. Compact the conversation now?',
-      options: [
-        { label: '/compact', effect: 'compact' },
-        { label: 'Keep going', effect: 'slow' },
-      ],
-    })
-  }
 
   return pool[Math.floor(rand() * pool.length)]
 }

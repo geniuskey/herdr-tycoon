@@ -30,3 +30,8 @@ npm run dev
 - `src/scenarios/index.ts`: projects (brief, build prompts, issues with sharp/generic prompts) and stages
 - `src/scenarios/events.ts`: permission / question events (red dot)
 - `src/previews/index.tsx`: the intentionally ugly sites that improve as issues get fixed
+
+## Credits
+
+- Notification sounds (`public/sounds/done.mp3`, `request.mp3`) are from
+  [herdr](https://github.com/herdrdev/herdr) (Apache-2.0).

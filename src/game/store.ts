@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import type { Agent, BlockEffect, Choice, FileNode, Issue, LogLine, Mail, StageDef } from './types'
 import { POLISH_PROMPTS, PROJECTS, REGRESSION, STAGES, TRAP_PROMPTS, VAGUE_PROMPTS } from '../scenarios'
-import { makeBlockedEvent } from '../scenarios/events'
+import { CONTEXT_EVENT, makeBlockedEvent } from '../scenarios/events'
+import { playSound } from './sound'
 
 export type WindowId = 'terminal' | 'browser' | 'explorer' | 'mail'
 export type Screen = 'title' | 'intro' | 'playing' | 'result'
@@ -42,6 +43,7 @@ interface GameState {
   mails: Mail[]
   selectedMail?: string
   windows: WinState[]
+  viewport: { w: number; h: number }
   focused: WindowId
   browserTab: string
   explorerProject: string
@@ -65,6 +67,7 @@ interface GameState {
   cycleFocus: () => void
   moveWindow: (id: WindowId, x: number, y: number) => void
   minimize: (id: WindowId) => void
+  fitToViewport: () => void
   setBrowserTab: (projectId: string) => void
   setExplorerProject: (projectId: string) => void
   readMail: (id: string) => void
@@ -206,15 +209,22 @@ function newAgent(projectId: string, idx: number): Agent {
     inspected: { browser: false, explorer: false, mail: false },
     autoEdits: false,
     slow: false,
-    log: [{ who: 'sys', text: `herdr: pane "${p.name}" ready. Waiting for instructions.` }],
+    ctx: 4,
+    log: [{ who: 'sys', text: `cwd: ~/projects/${p.name}` }],
     files: [],
     workingTime: 0,
   }
 }
 
+const TASKBAR_H = 48
+
+function currentViewport() {
+  if (typeof window === 'undefined') return { w: 1280, h: 800 - TASKBAR_H }
+  return { w: window.innerWidth, h: window.innerHeight - TASKBAR_H }
+}
+
 function defaultWindows(): WinState[] {
-  const W = typeof window !== 'undefined' ? window.innerWidth : 1280
-  const H = (typeof window !== 'undefined' ? window.innerHeight : 800) - 36
+  const { w: W, h: H } = currentViewport()
   const left = Math.max(8, Math.round(W * 0.01))
   const termW = Math.round(W * 0.5)
   const rightX = left + termW + 8
@@ -264,6 +274,7 @@ export const useGame = create<GameState>((set, get) => ({
   cursor: 0,
   mails: [],
   windows: defaultWindows(),
+  viewport: currentViewport(),
   focused: 'terminal',
   browserTab: 'todo',
   explorerProject: 'todo',
@@ -290,6 +301,7 @@ export const useGame = create<GameState>((set, get) => ({
       mails,
       selectedMail: undefined,
       windows: defaultWindows(),
+      viewport: currentViewport(),
       focused: 'terminal',
       browserTab: stage.projects[0],
       explorerProject: stage.projects[0],
@@ -341,14 +353,24 @@ export const useGame = create<GameState>((set, get) => ({
 
       if (!agent.blockFired && agent.progress >= 0.45) {
         agent.blockFired = true
+        if (agent.ctx >= 85) {
+          agent.status = 'blocked'
+          agent.blocked = CONTEXT_EVENT
+          playSound('request')
+          return agent
+        }
         if (Math.random() < stage.blockChance) {
           agent.status = 'blocked'
-          agent.blocked = makeBlockedEvent(PROJECTS[agent.projectId].name, agent.autoEdits, agent.slow, Math.random)
+          agent.blocked = makeBlockedEvent(PROJECTS[agent.projectId].name, agent.autoEdits, Math.random)
+          playSound('request')
           return agent
         }
       }
 
-      if (agent.progress >= 1) complete(agent)
+      if (agent.progress >= 1) {
+        complete(agent, time, stage.seconds)
+        playSound('done')
+      }
       return agent
     })
 
@@ -455,6 +477,7 @@ export const useGame = create<GameState>((set, get) => ({
         break
       case 'compact':
         agent.slow = false
+        agent.ctx = 5
         agent.log.push({ who: 'sys', text: 'Conversation compacted. Fresh and fast.' })
         break
     }
@@ -471,6 +494,24 @@ export const useGame = create<GameState>((set, get) => ({
     get().focus(order[(order.indexOf(get().focused) + 1) % order.length])
   },
   moveWindow: (id, x, y) => set({ windows: get().windows.map((w) => (w.id === id ? { ...w, x, y } : w)) }),
+  fitToViewport: () => {
+    const { viewport, windows } = get()
+    const next = currentViewport()
+    if (next.w === viewport.w && next.h === viewport.h) return
+    const sx = next.w / viewport.w
+    const sy = next.h / viewport.h
+    set({
+      viewport: next,
+      windows: windows.map((w) => ({
+        ...w,
+        // keep fractional values so repeated resizes don't drift
+        x: w.x * sx,
+        y: w.y * sy,
+        w: w.w * sx,
+        h: w.h * sy,
+      })),
+    })
+  },
   minimize: (id) => set({ windows: get().windows.map((w) => (w.id === id ? { ...w, minimized: true } : w)), focused: 'terminal' }),
   setBrowserTab: (projectId) => set({ browserTab: projectId }),
   setExplorerProject: (projectId) => set({ explorerProject: projectId }),
@@ -479,7 +520,7 @@ export const useGame = create<GameState>((set, get) => ({
 }))
 
 /** Finish the agent's current task. Mutates the (already-copied) agent. */
-function complete(agent: Agent) {
+function complete(agent: Agent, time: number, stageSeconds: number) {
   const c = agent.current!
   const p = PROJECTS[agent.projectId]
   const log: LogLine[] = [...agent.log]
@@ -491,6 +532,10 @@ function complete(agent: Agent) {
 
   const fix = (id: string) => {
     const issue = getIssue(agent.projectId, id)
+    for (const f of issue.files ?? [{ path: agent.files[0]?.path ?? 'src/App.tsx' }]) {
+      const add = 4 + Math.floor(Math.random() * 30)
+      log.push({ who: 'tool', text: `${f.mark === 'new' ? 'Write' : 'Update'}(${f.path})\n⎿  ${f.mark === 'new' ? `Wrote ${add + 10} lines` : `Updated with ${add} additions and ${Math.floor(add / 3)} removals`}` })
+    }
     agent.open = agent.open.filter((x) => x !== id)
     if (!agent.fixed.includes(id) || id === 'regression') agent.fixed = [...agent.fixed, id]
     agent.files = applyFiles(agent.files, issue.files, REMOVALS[id])
@@ -500,7 +545,10 @@ function complete(agent: Agent) {
   if (c.build) {
     const b = p.buildChoices.find((x) => x.label === c.label)!
     agent.built = true
-    agent.open = [...p.issues.map((i) => i.id)]
+    const arrived = (p.lateMails ?? []).filter((m) => m.at <= time && m.at < stageSeconds).map((m) => m.issue.id)
+    agent.open = [...p.issues.map((i) => i.id), ...arrived]
+    log.push({ who: 'tool', text: `Bash(npm create vite@latest ${p.name})` })
+    for (const f of p.baseFiles.slice(0, 3)) log.push({ who: 'tool', text: `Write(${f.path})` })
     agent.files = applyFiles(
       [],
       p.baseFiles.map((f) => ({ ...f, mark: f.mark ?? 'new' })),
@@ -525,6 +573,7 @@ function complete(agent: Agent) {
     log.push({ who: 'agent', text: 'Done. The project is a little more polished now.' })
   }
 
+  agent.ctx = Math.min(99, agent.ctx + 9 + Math.floor(Math.random() * 6) + (c.tier === 'vague' ? 6 : 0))
   log.push({ who: 'sys', text: TIER_NOTE[c.build && c.tier === 'trap' ? 'overkill' : c.tier] })
   agent.log = log.slice(-40)
   agent.choices = genChoices(agent)
