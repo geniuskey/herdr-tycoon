@@ -3,13 +3,62 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Herdr Tycoon</title>
+    <title>Herdr Tycoon: keep every coding agent busy</title>
+    <meta name="description" content="A tiny browser game about running several AI coding agents at once. Review their work, answer permission prompts and pick the next prompt so no pane goes idle. English and 한국어." />
+    <link rel="canonical" href="https://pages.euiyun.com/herdr-tycoon/" />
+    <meta name="theme-color" content="#1d1e22" />
+
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="./icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Herdr Tycoon" />
+    <meta property="og:title" content="Herdr Tycoon: keep every coding agent busy" />
+    <meta property="og:description" content="Run several AI coding agents in a fake desktop and keep every herdr dot yellow. Mouse or arrow keys, no typing." />
+    <meta property="og:url" content="https://pages.euiyun.com/herdr-tycoon/" />
+    <meta property="og:image" content="https://pages.euiyun.com/herdr-tycoon/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Herdr Tycoon: a terminal listing agents with yellow, red, green and idle status dots" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="ko_KR" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Herdr Tycoon: keep every coding agent busy" />
+    <meta name="twitter:description" content="Run several AI coding agents in a fake desktop and keep every herdr dot yellow." />
+    <meta name="twitter:image" content="https://pages.euiyun.com/herdr-tycoon/og-image.png" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "VideoGame",
+        "name": "Herdr Tycoon",
+        "url": "https://pages.euiyun.com/herdr-tycoon/",
+        "image": "https://pages.euiyun.com/herdr-tycoon/og-image.png",
+        "description": "A browser game about keeping several AI coding agents busy: review results, answer permission prompts and choose the next prompt.",
+        "genre": ["Simulation", "Casual"],
+        "gamePlatform": "Web browser",
+        "applicationCategory": "Game",
+        "operatingSystem": "Any",
+        "inLanguage": ["en", "ko"],
+        "isAccessibleForFree": true,
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;600&display=swap" rel="stylesheet" />
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <h1>Herdr Tycoon</h1>
+      <p>A tiny "keep every agent busy" simulator. Run several coding agents in a fake Windows 11 desktop, check their results in the Browser, Explorer and Mail, and pick the next prompt with your mouse or arrow keys. Goal: keep every herdr dot yellow (working).</p>
+      <p>모든 에이전트를 바쁘게. 노는 창은 하나도 없게. 이 게임은 JavaScript가 필요해요.</p>
+      <p>This game needs JavaScript.</p>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
