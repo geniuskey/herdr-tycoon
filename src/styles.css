@@ -350,11 +350,57 @@ button.accent:hover {
 }
 .side-new {
   margin-top: auto;
-  padding: 10px 10px 8px;
-  border-bottom: 1px solid var(--t-border);
+  padding: 10px 10px 4px;
+}
+.side-spaces {
+  flex: 1 1 auto;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+/* drag handle between spaces and agents: a 1px line with a taller hit area */
+.side-split {
+  flex: none;
+  height: 9px;
+  cursor: row-resize;
+  position: relative;
+  touch-action: none;
+}
+.side-split::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 4px;
+  height: 1px;
+  background: var(--t-border);
+}
+.side-split:hover::before,
+body.row-resizing .side-split::before {
+  height: 2px;
+  top: 3.5px;
+  background: var(--t-focus);
+}
+body.row-resizing,
+body.row-resizing * {
+  cursor: row-resize !important;
+  user-select: none !important;
 }
 .side-agents {
-  padding: 10px 0 0;
+  flex: none;
+  min-height: 40px;
+  max-height: calc(100% - 90px);
+  padding: 2px 0 0;
+  overflow-y: auto;
+}
+.side-spaces::-webkit-scrollbar,
+.side-agents::-webkit-scrollbar {
+  width: 6px;
+}
+.side-spaces::-webkit-scrollbar-thumb,
+.side-agents::-webkit-scrollbar-thumb {
+  background: #444;
 }
 .side-agents .side-h {
   margin-bottom: 10px;

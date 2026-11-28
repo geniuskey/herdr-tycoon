@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { isUnlocked, useGame } from '../game/store'
 import { PROJECTS, STAGES } from '../scenarios'
 import type { Agent, AgentStatus } from '../game/types'
@@ -186,6 +186,69 @@ function ClaudePane({ agent }: { agent: Agent }) {
   )
 }
 
+const SPLIT_KEY = 'herdr-tycoon:agents-height'
+const MIN_SPACES = 60
+const MIN_AGENTS = 40
+
+/** Drag the line between the spaces and agents lists to resize them (height remembered per browser). */
+function useSideSplit() {
+  const sideRef = useRef<HTMLDivElement>(null)
+  const agentsRef = useRef<HTMLDivElement>(null)
+  const [agentsH, setAgentsH] = useState<number | null>(() => {
+    try {
+      const v = Number(localStorage.getItem(SPLIT_KEY))
+      return v > 0 ? v : null
+    } catch {
+      return null
+    }
+  })
+
+  const startResize = (e: React.PointerEvent<HTMLDivElement>) => {
+    const side = sideRef.current
+    const agentsEl = agentsRef.current
+    if (!side || !agentsEl || e.button !== 0) return
+    e.preventDefault()
+    const handle = e.currentTarget
+    handle.setPointerCapture(e.pointerId)
+    const startY = e.clientY
+    const startH = agentsEl.getBoundingClientRect().height
+    // Everything in the sidebar that is neither spaces nor agents (handle, collapse arrow, padding).
+    const fixed = side.clientHeight - startH - (side.querySelector('.side-spaces') as HTMLElement).getBoundingClientRect().height
+    const maxH = Math.max(MIN_AGENTS, side.clientHeight - fixed - MIN_SPACES)
+    let last = startH
+    const move = (ev: PointerEvent) => {
+      last = Math.round(Math.min(maxH, Math.max(MIN_AGENTS, startH + startY - ev.clientY)))
+      setAgentsH(last)
+    }
+    const up = () => {
+      handle.removeEventListener('pointermove', move)
+      handle.removeEventListener('pointerup', up)
+      handle.removeEventListener('pointercancel', up)
+      document.body.classList.remove('row-resizing')
+      try {
+        localStorage.setItem(SPLIT_KEY, String(last))
+      } catch {
+        /* storage unavailable */
+      }
+    }
+    handle.addEventListener('pointermove', move)
+    handle.addEventListener('pointerup', up)
+    handle.addEventListener('pointercancel', up)
+    document.body.classList.add('row-resizing')
+  }
+
+  const resetResize = () => {
+    setAgentsH(null)
+    try {
+      localStorage.removeItem(SPLIT_KEY)
+    } catch {
+      /* storage unavailable */
+    }
+  }
+
+  return { sideRef, agentsRef, agentsH, startResize, resetResize }
+}
+
 export function Terminal() {
   const agents = useGame((s) => s.agents)
   const selected = useGame((s) => s.selected)
@@ -194,6 +257,7 @@ export function Terminal() {
   const { d } = useT()
   const agent = agents[selected]
   const space = agent ? PROJECTS[agent.projectId] : undefined
+  const { sideRef, agentsRef, agentsH, startResize, resetResize } = useSideSplit()
 
   return (
     <Window
@@ -209,25 +273,35 @@ export function Terminal() {
       bodyClass="term-body"
     >
       <div className="herdr">
-        <div className={`herdr-side ${tutorial ? 'wide' : ''}`}>
-          <div className="side-h">spaces</div>
-          {agents.map((a, i) => {
-            const p = PROJECTS[a.projectId]
-            return (
-              <div key={a.id} className={`ws ${i === selected ? 'sel' : ''}`} onClick={() => selectAgent(i)}>
-                <div className="ws-row">
-                  <Glyph status={a.status} /> <b>{p.name}</b>
+        <div ref={sideRef} className={`herdr-side ${tutorial ? 'wide' : ''}`}>
+          <div className="side-spaces">
+            <div className="side-h">spaces</div>
+            {agents.map((a, i) => {
+              const p = PROJECTS[a.projectId]
+              return (
+                <div key={a.id} className={`ws ${i === selected ? 'sel' : ''}`} onClick={() => selectAgent(i)}>
+                  <div className="ws-row">
+                    <Glyph status={a.status} /> <b>{p.name}</b>
+                  </div>
+                  <div className="ws-branch">{p.branch}</div>
                 </div>
-                <div className="ws-branch">{p.branch}</div>
-              </div>
-            )
-          })}
-          {tutorial && <Herdy />}
-          <div className="side-row side-new dim">
-            <span>new</span>
-            <span>menu</span>
+              )
+            })}
+            {tutorial && <Herdy />}
+            <div className="side-row side-new dim">
+              <span>new</span>
+              <span>menu</span>
+            </div>
           </div>
-          <div className="side-agents">
+          <div
+            className="side-split"
+            role="separator"
+            aria-orientation="horizontal"
+            onPointerDown={startResize}
+            onDoubleClick={resetResize}
+            title="drag to resize · double-click to reset"
+          />
+          <div ref={agentsRef} className="side-agents" style={agentsH != null ? { height: agentsH } : undefined}>
             <div className="side-row side-h">
               <span>agents</span>
               <span className="dim">grouped</span>
