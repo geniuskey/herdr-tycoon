@@ -98,7 +98,7 @@ const en = {
   // herdy
   herdyBrief: 'Every job starts in the inbox. Read the client mail (M) first: it tells you what to build and unlocks the ⭐ sharp first prompt.',
   herdyIdle: 'Your agent is idle (○). Idle agents are wasted time! Pick a prompt with ↑↓ and press Enter, or just click one.',
-  herdyWorking: 'Spinner = working. That is what you want! While it works, read the client mail (M). It has useful hints.',
+  herdyWorking: 'Yellow ● = working. That is what you want! While it works, read the client mail (M). It has useful hints.',
   herdyBlocked: 'Red = the agent needs you. Read what it is asking before you approve!',
   herdyLocked: (where: string) => `Green = done. Don't continue blind: check the ${where} to see the result. A sharper prompt unlocks!`,
   herdyUnlocked: 'Now you know what is wrong. Specific prompts are faster and more reliable. Send one quickly to get back to working!',
@@ -236,7 +236,7 @@ const ko: Dict = {
 
   herdyBrief: '모든 일은 받은 편지함에서 시작해요. 고객 메일(M)부터 읽으세요: 뭘 만들어야 하는지 알려 주고, ⭐ 정확한 첫 프롬프트가 열려요.',
   herdyIdle: '에이전트가 놀고 있어요 (○). 노는 에이전트는 시간 낭비! ↑↓로 프롬프트를 고르고 Enter를 누르거나, 그냥 클릭하세요.',
-  herdyWorking: '스피너 = 작업 중. 바로 이 상태를 유지해야 해요! 일하는 동안 고객 메일(M)을 읽어 보세요. 유용한 힌트가 있어요.',
+  herdyWorking: '노란 ● = 작업 중. 바로 이 상태를 유지해야 해요! 일하는 동안 고객 메일(M)을 읽어 보세요. 유용한 힌트가 있어요.',
   herdyBlocked: '빨간색 = 에이전트가 당신을 기다려요. 승인하기 전에 뭘 묻는지 꼭 읽어 보세요!',
   herdyLocked: (where) => `초록색 = 완료. 결과를 보지도 않고 계속하지 마세요: ${where}에서 결과를 확인하세요. 더 정확한 프롬프트가 열려요!`,
   herdyUnlocked: '이제 뭐가 문제인지 알았죠. 구체적인 프롬프트가 더 빠르고 확실해요. 얼른 보내서 다시 일하게 하세요!',

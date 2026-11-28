@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { isUnlocked, useGame } from '../game/store'
 import { PROJECTS, STAGES } from '../scenarios'
 import type { Agent, AgentStatus } from '../game/types'
@@ -6,26 +6,16 @@ import { Window } from './Window'
 import { Herdy } from './Shell'
 import { useT } from '../i18n'
 
-const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
 const VERBS = ['Zigzagging', 'Herding', 'Percolating', 'Noodling', 'Clauding', 'Tinkering', 'Brewing', 'Wrangling', 'Pondering', 'Shepherding']
-
-function useFrame(ms: number) {
-  const [f, setF] = useState(0)
-  useEffect(() => {
-    const t = setInterval(() => setF((x) => x + 1), ms)
-    return () => clearInterval(t)
-  }, [ms])
-  return f
-}
 
 /** Workspace-level status dot (used in herdr sidebar + taskbar tray). */
 export function Dot({ status }: { status: AgentStatus }) {
   return <span className={`dot dot-${status}`} aria-label={status} />
 }
 
+/** Agent row glyph, as herdr draws it: yellow ● while working. */
 function AgentGlyph({ status }: { status: AgentStatus }) {
-  const f = useFrame(90)
-  if (status === 'working') return <span className="g g-working">{SPINNER[f % SPINNER.length]}</span>
+  if (status === 'working') return <span className="g g-working">●</span>
   if (status === 'blocked') return <span className="g g-blocked">◉</span>
   if (status === 'done') return <span className="g g-done">●</span>
   return <span className="g g-idle">○</span>
