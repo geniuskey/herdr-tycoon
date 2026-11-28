@@ -26,6 +26,10 @@
   --t-blue: #6aa6e8;
   --t-purple: #b58fd6;
   --t-cyan: #64c2c8;
+  --t-done: #8cd9c4;
+  --t-head: #aeb4c4;
+  --t-tab: #3a3d45;
+  --t-tab-active: #8fb8f0;
 }
 
 * {
@@ -291,24 +295,33 @@ button.accent:hover {
   flex: 1;
   min-height: 0;
   display: flex;
-  padding: 6px 8px 8px 0;
+  padding: 4px 8px 8px 0;
 }
+/* sidebar: spaces on top, agents below (as in herdr) */
 .herdr-side {
-  width: 200px;
+  width: 220px;
   flex: none;
   display: flex;
   flex-direction: column;
-  padding: 2px 6px 0;
+  padding: 6px 0 0;
+  margin-right: 8px;
   user-select: none;
 }
 .herdr-side.wide {
-  width: 250px;
+  width: 260px;
+}
+.side-h {
+  color: var(--t-head);
+  padding: 0 10px;
+  margin-bottom: 10px;
+}
+.side-row {
+  display: flex;
+  justify-content: space-between;
 }
 .ws {
-  padding: 4px 8px;
-  margin-bottom: 8px;
+  padding: 0 10px;
   cursor: pointer;
-  border-radius: 2px;
 }
 .ws.sel {
   background: var(--t-sel);
@@ -319,52 +332,53 @@ button.accent:hover {
   gap: 8px;
   white-space: nowrap;
 }
-.ws-row b {
+.ws-row b,
+.ag-name b {
   font-weight: 600;
   color: #e8e8ea;
+}
+.ws-row b {
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .ws-branch {
   padding-left: 18px;
+  color: var(--t-dim);
 }
-.ws-new {
+.ws.sel .ws-branch {
+  color: var(--t-purple);
+}
+.side-new {
   margin-top: auto;
-  padding: 4px 0 8px;
+  padding: 10px 10px 8px;
   border-bottom: 1px solid var(--t-border);
 }
 .side-agents {
-  padding: 8px 8px 4px;
+  padding: 10px 0 0;
 }
-.side-h {
-  margin-bottom: 6px;
+.side-agents .side-h {
+  margin-bottom: 10px;
 }
 .ag {
-  display: grid;
-  grid-template-columns: 16px 1fr auto;
-  gap: 6px;
+  padding: 0 10px;
   cursor: pointer;
 }
+.ag.sel {
+  background: var(--t-sel);
+}
+.ag-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+}
 .ag-name {
-  font-weight: 600;
-  color: #e8e8ea;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.ag.sel .ag-name {
-  text-decoration: underline;
-  text-decoration-color: var(--t-dim);
-  text-underline-offset: 3px;
-}
-.ag-state {
-  color: var(--t-dim);
-}
-.ag-state.st-working {
-  color: var(--t-yellow);
-}
-.ag-state.st-blocked {
-  color: var(--t-red);
-}
-.ag-state.st-done {
-  color: var(--t-green);
+.ag-kind {
+  padding-left: 18px;
 }
 .ag.attn {
   animation: attn 1s steps(2) infinite;
@@ -374,7 +388,13 @@ button.accent:hover {
     background: rgba(224, 108, 117, 0.15);
   }
 }
+.side-collapse {
+  text-align: right;
+  padding: 2px 6px;
+}
 .g {
+  width: 10px;
+  flex: none;
   text-align: center;
 }
 .g-working {
@@ -382,18 +402,43 @@ button.accent:hover {
 }
 .g-blocked {
   color: var(--t-red);
+  animation: blink 0.7s steps(2) infinite;
 }
 .g-done {
-  color: var(--t-green);
+  color: var(--t-done);
 }
 .g-idle {
-  color: #fff;
+  color: var(--t-done);
 }
-.side-keys {
-  font-size: 10.5px;
-  line-height: 1.5;
-  padding: 8px;
-  border-top: 1px solid var(--t-border);
+
+/* main area: tab bar for the selected space, then its panes */
+.herdr-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.herdr-tabs {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: #23252b;
+  padding-right: 8px;
+  flex: none;
+}
+.htab {
+  background: var(--t-tab);
+  color: #c9ccd3;
+  padding: 0 18px;
+}
+.htab.active {
+  background: var(--t-tab-active);
+  color: #10131a;
+  font-weight: 600;
+}
+.htab-plus {
+  padding: 0 4px;
 }
 
 .dot {
@@ -404,7 +449,7 @@ button.accent:hover {
   flex: none;
 }
 .dot-idle {
-  border: 1.5px solid #fff;
+  border: 1.5px solid var(--t-done);
   background: transparent;
 }
 .dot-working {
@@ -415,7 +460,7 @@ button.accent:hover {
   animation: blink 0.7s steps(2) infinite;
 }
 .dot-done {
-  background: var(--t-green);
+  background: var(--t-done);
 }
 @keyframes blink {
   50% {
@@ -527,10 +572,24 @@ button.accent:hover {
   color: var(--t-orange);
   margin: 8px 0;
 }
+.cc-rule {
+  height: 1px;
+  background: var(--t-dim);
+  margin: 6px 0;
+  position: relative;
+  flex: none;
+}
+.cc-rule-title {
+  position: absolute;
+  right: 12px;
+  top: -0.75em;
+  padding: 0 6px;
+  background: var(--t-bg);
+  color: var(--t-dim);
+  line-height: 1.5;
+}
 .cc-input {
-  border-top: 1px solid var(--t-border);
-  border-bottom: 1px solid var(--t-border);
-  padding: 4px 2px;
+  padding: 2px 2px;
   display: flex;
   gap: 8px;
   align-items: center;
@@ -603,12 +662,16 @@ button.accent:hover {
   margin-bottom: 4px;
 }
 .cc-status {
-  padding-top: 4px;
+  padding-top: 2px;
   font-size: 12px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   flex: none;
+}
+
+.cc-mode {
+  color: var(--t-yellow);
 }
 
 /* tutorial helper inside the herdr sidebar */

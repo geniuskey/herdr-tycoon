@@ -13,12 +13,9 @@ export function Dot({ status }: { status: AgentStatus }) {
   return <span className={`dot dot-${status}`} aria-label={status} />
 }
 
-/** Agent row glyph, as herdr draws it: yellow ● while working. */
-function AgentGlyph({ status }: { status: AgentStatus }) {
-  if (status === 'working') return <span className="g g-working">●</span>
-  if (status === 'blocked') return <span className="g g-blocked">◉</span>
-  if (status === 'done') return <span className="g g-done">●</span>
-  return <span className="g g-idle">○</span>
+/** Status glyph as herdr draws it in the spaces and agents lists: ● working / done, ◉ needs you, ○ idle. */
+function Glyph({ status }: { status: AgentStatus }) {
+  return <span className={`g g-${status}`}>{status === 'idle' ? '○' : status === 'blocked' ? '◉' : '●'}</span>
 }
 
 function ctxBar(ctx: number) {
@@ -154,10 +151,14 @@ function ClaudePane({ agent }: { agent: Agent }) {
         </div>
       )}
 
+      <div className="cc-rule">
+        <span className="cc-rule-title">{tx(p.title)}</span>
+      </div>
       <div className="cc-input">
-        <span className="dim">❯</span>
+        <span>❯</span>
         {agent.status === 'idle' || agent.status === 'done' ? <span className="cc-cursor" /> : null}
       </div>
+      <div className="cc-rule" />
 
       {(agent.status === 'idle' || agent.status === 'done') && (
         <div className="cc-menu">
@@ -176,10 +177,10 @@ function ClaudePane({ agent }: { agent: Agent }) {
       )}
 
       <div className="cc-status">
-        <span className="purple">~/p/{p.name}</span> <span className="dim">⎇</span> <span className="blue">{p.branch}</span>{' '}
+        {agent.autoEdits ? <span className="cc-mode">⏵⏵ {d.acceptEdits}</span> : <span className="dim">{d.keysHint}</span>}
+        <span className="dim"> · </span>
         <span className={agent.ctx >= 85 ? 'red' : 'dim'}>{ctxBar(agent.ctx)}</span> <span className={agent.ctx >= 85 ? 'red' : 'cyan'}>{agent.ctx}%</span>
         {agent.slow && <span className="red">{d.slowCtx}</span>}
-        {agent.autoEdits && <span className="dim">{d.acceptEdits}</span>}
       </div>
     </div>
   )
@@ -192,6 +193,7 @@ export function Terminal() {
   const tutorial = useGame((s) => !!STAGES[s.stageIndex].tutorial)
   const { d } = useT()
   const agent = agents[selected]
+  const space = agent ? PROJECTS[agent.projectId] : undefined
 
   return (
     <Window
@@ -200,7 +202,7 @@ export function Terminal() {
       icon=""
       title={
         <span className="wt-tab">
-          <span className="wt-tab-icon">❯_</span> herdr
+          <span className="wt-tab-icon">❯_</span> herdr{space ? `: ${space.name}` : ''}
         </span>
       }
       titleExtra={<span className="wt-plus">+ ⌄</span>}
@@ -208,41 +210,60 @@ export function Terminal() {
     >
       <div className="herdr">
         <div className={`herdr-side ${tutorial ? 'wide' : ''}`}>
+          <div className="side-h">spaces</div>
           {agents.map((a, i) => {
             const p = PROJECTS[a.projectId]
             return (
               <div key={a.id} className={`ws ${i === selected ? 'sel' : ''}`} onClick={() => selectAgent(i)}>
                 <div className="ws-row">
-                  <span className="dim">{i + 1}</span> <b>{p.name}</b> <Dot status={a.status} />
+                  <Glyph status={a.status} /> <b>{p.name}</b>
                 </div>
-                <div className={`ws-branch ${i === selected ? 'purple' : 'dim'}`}>{p.branch}</div>
+                <div className="ws-branch">{p.branch}</div>
               </div>
             )
           })}
-          <div className="ws-new dim">new</div>
           {tutorial && <Herdy />}
+          <div className="side-row side-new dim">
+            <span>new</span>
+            <span>menu</span>
+          </div>
           <div className="side-agents">
-            <div className="side-h dim">agents</div>
-            {agents.map((a, i) => (
-              <div key={a.id} className={`ag ${i === selected ? 'sel' : ''} ${a.status === 'blocked' ? 'attn' : ''}`} onClick={() => selectAgent(i)}>
-                <AgentGlyph status={a.status} />
-                <span className="ag-name">
-                  claude <span className="dim">· {i + 1}</span>
-                </span>
-                <span className={`ag-state st-${a.status}`}>{d.status[a.status]}</span>
-              </div>
-            ))}
+            <div className="side-row side-h">
+              <span>agents</span>
+              <span className="dim">grouped</span>
+            </div>
+            {agents.map((a, i) => {
+              const p = PROJECTS[a.projectId]
+              return (
+                <div
+                  key={a.id}
+                  className={`ag ${i === selected ? 'sel' : ''} ${a.status === 'blocked' ? 'attn' : ''}`}
+                  title={d.status[a.status]}
+                  onClick={() => selectAgent(i)}
+                >
+                  <div className="ag-row">
+                    <Glyph status={a.status} />
+                    <span className="ag-name">
+                      <b>{p.name}</b> <span className="dim">· {p.tab}</span>
+                    </span>
+                  </div>
+                  <div className="ag-kind dim">claude</div>
+                </div>
+              )
+            })}
           </div>
-          <div className="side-keys dim">
-            <div>{d.keysWorkspace}</div>
-            <div>{d.keysSend}</div>
-            <div>{d.keysApps}</div>
-          </div>
+          <div className="side-collapse dim">«</div>
         </div>
-        {agent && (
-          <div className="panes">
-            <ClaudePane agent={agent} />
-            <DevServerPane agent={agent} />
+        {agent && space && (
+          <div className="herdr-main">
+            <div className="herdr-tabs">
+              <span className="htab active">{space.tab}</span>
+              <span className="htab-plus dim">+</span>
+            </div>
+            <div className="panes">
+              <ClaudePane agent={agent} />
+              <DevServerPane agent={agent} />
+            </div>
           </div>
         )}
       </div>

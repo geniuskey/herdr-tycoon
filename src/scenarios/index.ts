@@ -46,6 +46,7 @@ export const PROJECTS: Record<string, ProjectScenario> = {
     id: 'todo',
     name: 'todo-app',
     branch: 'main',
+    tab: 'mvp',
     title: l('Todo App', '할 일 앱'),
     port: 3001,
     brief: {
@@ -160,6 +161,7 @@ export const PROJECTS: Record<string, ProjectScenario> = {
     id: 'cafe',
     name: 'cafe-landing',
     branch: 'feat/landing',
+    tab: 'landing',
     title: l('Cafe Landing Page', '카페 랜딩 페이지'),
     port: 3002,
     brief: {
@@ -306,6 +308,7 @@ export const PROJECTS: Record<string, ProjectScenario> = {
     id: 'weather',
     name: 'weather-dash',
     branch: 'dashboard-v1',
+    tab: 'board',
     title: l('Weather Dashboard', '날씨 대시보드'),
     port: 3003,
     brief: {
@@ -411,6 +414,7 @@ export const PROJECTS: Record<string, ProjectScenario> = {
     id: 'rsvp',
     name: 'rsvp-form',
     branch: 'feature/rsvp',
+    tab: 'form',
     title: l('Meetup RSVP', '밋업 참가 신청'),
     port: 3004,
     brief: {

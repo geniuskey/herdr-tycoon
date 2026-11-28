@@ -726,6 +726,8 @@ function complete(agent: Agent, time: number) {
     log.push({ who: 'agent', text: ui((d) => d.polishDone) })
   }
 
+  // Claude Code's completion line (its UI isn't localized, so neither is this).
+  log.push({ who: 'sys', text: `✻ Worked for ${Math.round(agent.seconds)}s` })
   agent.ctx = Math.min(99, agent.ctx + 9 + Math.floor(Math.random() * 6) + (c.tier === 'vague' ? 6 : 0))
   const note = c.build && c.tier === 'trap' ? 'overkill' : c.tier
   log.push({ who: 'sys', text: ui((d) => d.tierNote[note]) })

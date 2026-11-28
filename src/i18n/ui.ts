@@ -55,10 +55,8 @@ const en = {
   lockedChoice: (where: string) => `🔒 A sharper prompt is available. Check the ${where} to see what's wrong.`,
   lockedBrief: '🔒 Read the client brief in Mail (M) to unlock the sharp first prompt.',
   slowCtx: ' · slow (context full)',
-  acceptEdits: ' · ⏵⏵ accept edits on',
-  keysWorkspace: '←→ workspace · ↑↓ option',
-  keysSend: '⏎/1-4 send · N next waiting',
-  keysApps: 'B browser · E files · M mail',
+  acceptEdits: 'accept edits on',
+  keysHint: '←→ space · ↑↓ option · ⏎ send · N next waiting · B/E/M apps',
 
   // browser
   newResult: 'New result to review',
@@ -198,10 +196,8 @@ const ko: Dict = {
   lockedChoice: (where) => `🔒 더 정확한 프롬프트가 있어요. ${where}에서 뭐가 문제인지 확인하세요.`,
   lockedBrief: '🔒 메일(M)에서 고객 요청을 읽으면 정확한 첫 프롬프트가 열려요.',
   slowCtx: ' · 느림 (컨텍스트 가득)',
-  acceptEdits: ' · ⏵⏵ 편집 자동 승인',
-  keysWorkspace: '←→ 워크스페이스 · ↑↓ 선택',
-  keysSend: '⏎/1-4 전송 · N 다음 대기',
-  keysApps: 'B 브라우저 · E 파일 · M 메일',
+  acceptEdits: '편집 자동 승인',
+  keysHint: '←→ 스페이스 · ↑↓ 선택 · ⏎ 전송 · N 다음 대기 · B/E/M 앱',
 
   newResult: '확인할 새 결과',
   cantReach: '음… 이 페이지에 연결할 수 없습니다',

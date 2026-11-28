@@ -8,7 +8,7 @@ Goal: keep every herdr dot **yellow** (working).
 
 | Dot | Meaning |
 |---|---|
-| ○ hollow white | idle: wasted time |
+| ○ hollow | idle: wasted time |
 | 🟡 yellow | working: what you want |
 | 🔴 red | needs you (permission / question) |
 | 🟢 green | done: review the result, then send the next prompt |

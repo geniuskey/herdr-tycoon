@@ -37,6 +37,8 @@ export interface ProjectScenario {
   id: string
   name: string // folder name, e.g. "todo-app"
   branch: string
+  /** herdr tab the agent runs in, shown as "space · tab" in the agents list. */
+  tab: string
   title: L // human name
   port: number
   brief: Brief
